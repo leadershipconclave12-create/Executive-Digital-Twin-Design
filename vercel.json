@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm --prefix eios-prototype/web install && npm --prefix eios-prototype/web run build",
+  "outputDirectory": "eios-prototype/web/dist",
+  "installCommand": "echo 'install handled by buildCommand'",
+  "framework": null,
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

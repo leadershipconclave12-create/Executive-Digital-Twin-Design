@@ -15,6 +15,11 @@ export const config = {
     azureDeployment: process.env.AZURE_OPENAI_DEPLOYMENT ?? 'gpt-4o',
   },
   /**
+   * Shared secret required for any non-localhost access. Unset is safe ONLY on
+   * localhost — the server refuses remote requests without it (see api/middleware.ts).
+   */
+  accessToken: process.env.EIOS_ACCESS_TOKEN ?? '',
+  /**
    * The event log is the system of record (Phase 2). Durable by default — set
    * EIOS_EVENT_LOG=off for ephemeral runs. In production this seam is Kafka /
    * Azure Event Hubs; the append/read contract is identical.

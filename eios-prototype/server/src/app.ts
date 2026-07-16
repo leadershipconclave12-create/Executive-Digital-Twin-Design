@@ -8,6 +8,10 @@ import './governance/audit.js' // register the audit event subscriber
 
 export function createApp() {
   const app = express()
+  // Behind a platform load balancer (Render/Fly/Railway), req.ip is the proxy unless we
+  // trust it. Getting this wrong would make every remote request look like localhost and
+  // silently defeat the access guard.
+  app.set('trust proxy', true)
   app.use(cors())
   // Raw email exports arrive as text/plain; everything else as JSON.
   app.use(express.text({ type: ['text/plain', 'message/rfc822'], limit: '25mb' }))

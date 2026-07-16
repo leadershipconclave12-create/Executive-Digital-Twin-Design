@@ -3,19 +3,37 @@ import type {
   PulseSnapshot, MemoryOverview, RecallAnswer, QualityReport, WisdomCandidate,
 } from './types'
 
-// Thin API client. The current user id is sent as the x-eios-user header so the
-// backend can enforce RBAC/ABAC (Vol 7) — switching the user in the UI genuinely
-// changes what the server allows.
-let currentUserId = 'u-dc'
-export function setUser(id: string) { currentUserId = id }
-export function getUserId() { return currentUserId }
+// Thin API client for the single user (the Deputy Chief).
+//
+// WHERE IS THE API?
+//   - dev / single-container: same origin. Vite proxies /api -> :4180; in prod the
+//     Express server serves the built UI itself. Leave VITE_API_URL unset.
+//   - split deploy (UI on a static host, backend elsewhere): set VITE_API_URL to the
+//     backend's public origin at BUILD time, e.g. https://eios-api.onrender.com
+//
+// Vite inlines VITE_* at build time — changing it needs a rebuild, not a restart.
+const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+
+/**
+ * Optional shared secret. Required only when the backend sets EIOS_ACCESS_TOKEN
+ * (i.e. any deploy that is not localhost). Never commit a real value.
+ */
+const ACCESS_TOKEN = import.meta.env.VITE_ACCESS_TOKEN ?? ''
+
+export function apiUrl(path: string): string {
+  return `${API_BASE}/api${path}`
+}
+
+function authHeaders(): Record<string, string> {
+  return ACCESS_TOKEN ? { 'x-eios-token': ACCESS_TOKEN } : {}
+}
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(apiUrl(path), {
     ...init,
     headers: {
       'content-type': 'application/json',
-      'x-eios-user': currentUserId,
+      ...authHeaders(),
       ...(init?.headers ?? {}),
     },
   })
@@ -54,9 +72,16 @@ export const api = {
     req<{ rejected: string }>(`/knowledge/wisdom/${id}/reject`, { method: 'POST' }),
 }
 
-/** Subscribe to the live organizational heartbeat via Server-Sent Events. */
+/**
+ * Subscribe to the live organizational heartbeat via Server-Sent Events.
+ *
+ * NOTE: SSE needs a backend process that stays alive. It does not work on serverless
+ * (Vercel/Netlify functions) — see DEPLOY.md.
+ */
 export function streamPulse(onSnapshot: (snap: PulseSnapshot) => void): () => void {
-  const es = new EventSource(`/api/pulse/stream?user=${encodeURIComponent(currentUserId)}`)
+  // EventSource cannot set headers, so the token rides as a query param when present.
+  const q = ACCESS_TOKEN ? `?token=${encodeURIComponent(ACCESS_TOKEN)}` : ''
+  const es = new EventSource(apiUrl(`/pulse/stream${q}`))
   es.onmessage = (e) => {
     try { onSnapshot(JSON.parse(e.data) as PulseSnapshot) } catch { /* ignore */ }
   }

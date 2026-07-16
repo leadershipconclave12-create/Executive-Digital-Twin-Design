@@ -1,0 +1,52 @@
+# The EIOS backend — an always-on container, which is what this app actually needs.
+#
+# Render is one option; Railway / Fly.io / any container host works identically because
+# the Dockerfile does the work. What matters is NOT serverless: EIOS needs a process that
+# stays alive (4s heartbeat), a writable disk (the event log), and long-lived connections
+# (SSE). See DEPLOY.md.
+#
+# Deploy: Render dashboard -> New -> Blueprint -> point at this repo.
+
+services:
+  - type: web
+    name: eios
+    runtime: docker
+    dockerfilePath: ./eios-prototype/Dockerfile
+    dockerContext: ./eios-prototype
+    plan: starter # free tier sleeps after inactivity — which KILLS the heartbeat. See DEPLOY.md.
+    healthCheckPath: /api/health
+
+    disk:
+      # The event log is the organization's history. Without a persistent disk, every
+      # deploy forgets everything and the durability guarantee is a lie.
+      name: eios-data
+      mountPath: /app/data
+      sizeGB: 1
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4180
+      - key: EIOS_EVENT_LOG
+        value: /app/data/events.jsonl
+      - key: EIOS_SNAPSHOT
+        value: /app/data/snapshot.json
+
+      # REQUIRED. Without this the server refuses every remote request (fails closed).
+      # `generateValue: true` makes Render mint a secret; copy it into the web build as
+      # VITE_ACCESS_TOKEN.
+      - key: EIOS_ACCESS_TOKEN
+        generateValue: true
+
+      # Reasoning. Set these in the Render dashboard — never commit them.
+      - key: EIOS_LLM_BASE_URL
+        sync: false
+      - key: EIOS_LLM_API_KEY
+        sync: false
+      - key: EIOS_LLM_SMALL_MODEL
+        value: gpt-4o-mini
+      - key: EIOS_LLM_FRONTIER_MODEL
+        value: gpt-4o
+      - key: EIOS_LLM_BUDGET_USD
+        value: 50

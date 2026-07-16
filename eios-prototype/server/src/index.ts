@@ -27,6 +27,9 @@ app.listen(config.port, () => {
     `  Event log       : ${log.durable ? log.path : 'EPHEMERAL (EIOS_EVENT_LOG=off)'} — ${log.events} events, digest ${log.digest}\n` +
     `  Twin rebuilt    : ${rebuilt.events} events replayed, state ${rebuilt.hash}\n` +
     `  Determinism     : ${determinism.deterministic ? 'VERIFIED' : '*** FAILED ***'}\n` +
+    `  Access          : ${config.accessToken
+      ? 'token required — safe to expose'
+      : 'LOCALHOST ONLY — no EIOS_ACCESS_TOKEN set; remote requests are refused'}\n` +
     `  Pulse           : beating every 4s (GET /api/pulse, stream at /api/pulse/stream)\n` +
     `  Try: GET /api/platform/scorecard`,
   )

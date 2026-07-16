@@ -1,0 +1,10 @@
+services:
+  eios:
+    build: .
+    ports: ["4180:4180"]
+    env_file: [.env]
+    volumes:
+      - eios-data:/app/data   # durability: the event log survives container restarts
+    restart: unless-stopped
+volumes:
+  eios-data:

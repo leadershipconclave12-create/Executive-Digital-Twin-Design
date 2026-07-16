@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Secrets — never commit. Use .env.example as the template.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Runtime data — the event log is the organization's history, not source.
+data/
+*.jsonl
+snapshot.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

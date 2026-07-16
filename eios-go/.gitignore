@@ -1,0 +1,4 @@
+# Compiled binary (built with: go build -o eios.exe .)
+*.exe
+# Runtime event-log dir
+/data/

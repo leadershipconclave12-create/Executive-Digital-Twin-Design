@@ -6,6 +6,9 @@ dist/
 build/
 *.tsbuildinfo
 
+# Compiled Go binaries
+*.exe
+
 # Secrets — never commit. Use .env.example as the template.
 .env
 .env.*
@@ -13,8 +16,14 @@ build/
 *.key
 *.pem
 
-# Runtime data — the event log is the organization's history, not source.
-data/
+# Runtime data — event logs & snapshots are the org's history, not source.
+# Anchored to the ACTUAL runtime dirs so this never swallows SOURCE directories
+# named "data" (server/src/data, eios-go/internal/data) — the bug that shipped
+# the prototype un-buildable.
+/data/
+/eios-prototype/data/
+/eios-prototype/server/data/
+/eios-go/data/
 *.jsonl
 snapshot.json
 

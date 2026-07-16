@@ -1,3 +1,4 @@
+import './loadEnv.js' // MUST be first — populates process.env before config.js reads it
 import { createApp } from './app.js'
 import { config } from './config.js'
 import { aiProvider } from './cognitive/aiProvider.js'

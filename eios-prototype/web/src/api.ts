@@ -38,12 +38,55 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
     },
   })
   const body = await res.json().catch(() => ({}))
-  if (!res.ok) throw new ApiError(body?.error ?? res.statusText, res.status)
+  if (!res.ok) {
+    // A bare 404 from a static host has no JSON body and often an empty statusText,
+    // which used to surface to the user as an empty "()". Never emit a blank error.
+    throw new ApiError(body?.error || res.statusText || `HTTP ${res.status}`, res.status)
+  }
   return body as T
 }
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) { super(message) }
+}
+
+/** Is the browser pointed at a backend on this machine? */
+function isLocalHost(): boolean {
+  const h = window.location.hostname
+  return h === 'localhost' || h === '127.0.0.1' || h === '[::1]'
+}
+
+/**
+ * Turn "it didn't work" into "here is what is wrong and what to do".
+ *
+ * The common case is a static deploy (Vercel/Netlify) with no backend: the UI is served,
+ * every /api call 404s, and the old message unhelpfully asked whether a server was
+ * running on :4180 — a localhost question on a cloud URL.
+ */
+export function diagnose(e: unknown): string {
+  const err = e as ApiError
+  const status = err?.status
+  const where = API_BASE || window.location.origin
+
+  if (status === 401) {
+    return ACCESS_TOKEN
+      ? `Backend rejected the access token. VITE_ACCESS_TOKEN must match EIOS_ACCESS_TOKEN on the server — and Vite inlines it at BUILD time, so rebuild after changing it.`
+      : `Backend requires an access token. Set VITE_ACCESS_TOKEN in the web build to match EIOS_ACCESS_TOKEN on the server.`
+  }
+  if (status === 403) {
+    return `Backend refused this request as unprotected and non-local. Set EIOS_ACCESS_TOKEN on the server (and VITE_ACCESS_TOKEN here). See DEPLOY.md.`
+  }
+  if (!API_BASE && !isLocalHost()) {
+    // The exact situation a Vercel deploy lands in.
+    return `No backend is configured. This is a static deploy of the UI only — there is no EIOS server behind it. `
+      + `EIOS needs an always-on backend (4s heartbeat, event log on disk, SSE); serverless cannot host it. `
+      + `Deploy the backend (see DEPLOY.md / render.yaml), then set VITE_API_URL to its URL and rebuild.`
+  }
+  if (!API_BASE && isLocalHost()) {
+    return `Cannot reach the EIOS backend on :4180. Start it with "npm run dev" from eios-prototype/.`
+  }
+  return `Backend at ${where} is unreachable${status ? ` (HTTP ${status})` : ''}. `
+    + `It may be asleep (free tiers idle out), still deploying, or the URL may be wrong.`
 }
 
 export const api = {

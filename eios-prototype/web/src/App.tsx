@@ -3,7 +3,7 @@ import type {
   User, Overview, Signal, DecisionItem, Delegation, Agent, AuditEvent, CommandEntry, PulseSnapshot,
   MemoryOverview, RecallAnswer, QualityReport, WisdomCandidate,
 } from './types'
-import { api, streamPulse, ApiError } from './api'
+import { api, streamPulse, diagnose, ApiError } from './api'
 
 let uid = 0
 const genId = () => `c${++uid}`
@@ -44,6 +44,8 @@ export default function App() {
   const [log, setLog] = useState<CommandEntry[]>([])
   const [input, setInput] = useState('')
   const [notice, setNotice] = useState<{ text: string; kind: 'error' | 'ok' } | null>(null)
+  /** Fatal: no backend. Must not auto-dismiss — it is the only thing on screen. */
+  const [bootError, setBootError] = useState<string | null>(null)
   const feedRef = useRef<HTMLDivElement>(null)
 
   const loadData = useCallback(async () => {
@@ -106,7 +108,7 @@ export default function App() {
           chips: ['Brief me', 'UPI status', 'Show decisions'],
         }])
       } catch (e) {
-        setNotice({ text: `Cannot reach EIOS backend — is the server running on :4180? (${(e as Error).message})`, kind: 'error' })
+        setBootError(diagnose(e))
       }
     })()
   }, [loadData, loadIdentity])
@@ -191,6 +193,16 @@ export default function App() {
         {me && <span className="role-chip">{me.title} · authority ₹{me.financialAuthorityInr.toLocaleString('en-IN')}</span>}
       </nav>
 
+      {bootError && (
+        <div className="boot-error">
+          <div className="boot-error-title">⚠ No EIOS backend</div>
+          <p>{bootError}</p>
+          <p className="boot-error-hint">
+            Everything below is empty because the UI has nothing to talk to — not because
+            EIOS is broken.
+          </p>
+        </div>
+      )}
       {notice && <div className={`notice notice-${notice.kind}`}>{notice.text}</div>}
 
       <div className="layout">

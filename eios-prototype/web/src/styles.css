@@ -421,3 +421,14 @@ h2 { font-size: 15px; margin: 0; letter-spacing: .1px; }
 .cand-pat { font-family: 'Cascadia Code', ui-monospace, monospace; font-size: 10.5px; color: var(--text-faint); margin-left: auto; }
 .cand-rule { font-size: 13px; font-weight: 550; line-height: 1.45; }
 .cand-occ { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+
+/* ---- Fatal: no backend. Persistent, not a toast. ---- */
+.boot-error {
+  max-width: 1600px; margin: 16px auto 0; width: calc(100% - 48px);
+  background: color-mix(in srgb, var(--bad) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bad) 40%, transparent);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.boot-error-title { font-size: 14px; font-weight: 650; color: var(--bad); margin-bottom: 6px; }
+.boot-error p { font-size: 13px; line-height: 1.6; color: var(--text-dim); margin: 0 0 6px; }
+.boot-error-hint { font-size: 12px !important; color: var(--text-faint) !important; }

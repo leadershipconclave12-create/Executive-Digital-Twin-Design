@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"eios/internal/agent"
 	"eios/internal/command"
 	"eios/internal/config"
 	"eios/internal/data"
@@ -24,18 +25,19 @@ import (
 )
 
 type Server struct {
-	cfg      config.Config
-	store    *data.Store
-	audit    *governance.AuditLog
-	pulse    *twin.Pulse
-	llm      *llm.Provider
-	limits   governance.Limits
-	user     domain.User
+	cfg    config.Config
+	store  *data.Store
+	audit  *governance.AuditLog
+	pulse  *twin.Pulse
+	llm    *llm.Provider
+	agent  *agent.Agent
+	limits governance.Limits
+	user   domain.User
 }
 
-func NewServer(cfg config.Config, store *data.Store, audit *governance.AuditLog, pulse *twin.Pulse, provider *llm.Provider) *Server {
+func NewServer(cfg config.Config, store *data.Store, audit *governance.AuditLog, pulse *twin.Pulse, provider *llm.Provider, ag *agent.Agent) *Server {
 	return &Server{
-		cfg: cfg, store: store, audit: audit, pulse: pulse, llm: provider,
+		cfg: cfg, store: store, audit: audit, pulse: pulse, llm: provider, agent: ag,
 		limits: governance.Limits{AutonomousFinancialLimitInr: cfg.AutonomousFinancialLimitInr, AutonomousConfidence: cfg.AutonomousConfidence},
 		user:   data.DeputyChief(),
 	}
@@ -239,8 +241,10 @@ func (s *Server) Handler(static http.Handler) http.Handler {
 	// email triage (the real workflow)
 	mux.HandleFunc("POST /api/ingest/email", s.authed(s.ingestEmail))
 
-	// memory + knowledge (structurally-valid; deep engine ports land next phase —
-	// honest low-confidence answers rather than fabricated ones).
+	// local laptop agent — his real apps, mailbox and documents
+	s.registerAgent(mux)
+
+	// memory + knowledge
 	s.registerMemoryStubs(mux)
 
 	// static UI (SPA) for everything else

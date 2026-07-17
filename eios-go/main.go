@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"eios/internal/agent"
 	"eios/internal/api"
 	"eios/internal/config"
 	"eios/internal/data"
@@ -58,7 +59,11 @@ func main() {
 	provider := llm.New(cfg.LLMBaseURL, cfg.LLMAPIKey, cfg.LLMSmallModel, cfg.LLMFrontierModel, cfg.LLMBudgetUSD)
 	pulse := twin.NewPulse(store)
 
-	srv := api.NewServer(cfg, store, audit, pulse, provider)
+	// The local agent: watches which app he's actually in. Read-only, no admin.
+	ag := agent.New()
+	ag.Watch(2 * time.Second)
+
+	srv := api.NewServer(cfg, store, audit, pulse, provider, ag)
 	handler := srv.Handler(staticHandler())
 
 	pulse.Start(4 * time.Second)

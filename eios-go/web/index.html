@@ -120,6 +120,10 @@ h1{margin:0;font-size:clamp(21px,2.4vw,27px);font-weight:650;letter-spacing:-.02
 .status .tag{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3.5px 8px;border-radius:5px;color:#fff;flex:none}
 .status .msg{font-size:13.5px;color:var(--ink-2);font-weight:500}
 .status .msg b{color:var(--ink);font-weight:650}
+.onscreen{font-size:11.5px;color:var(--ink-3);display:inline-flex;align-items:center;gap:6px}
+.onscreen.live{color:var(--ink-2);font-weight:600}
+.onscreen .lv{width:5px;height:5px;border-radius:50%;background:var(--good);flex:none}
+.onscreen b{color:var(--ink);font-weight:650}
 
 /* ---- metrics ------------------------------------------------------------- */
 .hero-n{display:flex;align-items:baseline;gap:9px}
@@ -225,7 +229,7 @@ h1{margin:0;font-size:clamp(21px,2.4vw,27px);font-weight:650;letter-spacing:-.02
       <div class="panel">
         <div class="hd">
           <h2>Your Microsoft apps</h2>
-          <span style="font-size:11.5px;color:var(--ink-3)">Tap an app</span>
+          <span class="onscreen" id="onScreen">Tap an app</span>
         </div>
         <div class="graph" id="graph">
           <svg class="wires" id="wires" aria-hidden="true"></svg>
@@ -492,11 +496,51 @@ async function ask(){
 $("askGo").addEventListener("click",ask);
 $("askIn").addEventListener("keydown",function(e){ if(e.key==="Enter") ask() });
 
+/* --- real activity: what is actually in front of him right now ------------ */
+/* When the local agent is watching, the graph stops guessing and follows his
+   real desktop. Until then it demonstrates on a timer — and says which. */
+var realMode=false, demoTimer=null;
+function fmtDur(s){
+  if(s<60) return s+"s";
+  var m=Math.floor(s/60); if(m<60) return m+"m";
+  return Math.floor(m/60)+"h "+(m%60)+"m";
+}
+async function loadActivity(){
+  try{
+    var ctl=new AbortController(); setTimeout(function(){ctl.abort()},2000);
+    var a=await fetch("/api/activity",{signal:ctl.signal}).then(function(r){return r.json()});
+    if(!a || !a.supported || !a.watching) throw 0;
+
+    if(!realMode){ realMode=true; clearInterval(demoTimer); demoTimer=null; }
+
+    var el=$("onScreen"); el.classList.add("live");
+    var secs=0; (a.today||[]).forEach(function(u){ if(u.key===a.activeKey) secs=u.seconds });
+    el.innerHTML='<span class="lv"></span>On screen: <b>'+(a.activeApp||"—")+'</b>'+(secs?" · "+fmtDur(secs):"");
+
+    var idx=-1; APPS.forEach(function(x,i){ if(x.k===a.activeKey) idx=i });
+    if(idx>=0){
+      setActive(idx);
+      $("stMsg").innerHTML="You're in <b>"+a.activeApp+"</b> right now — watching alongside you.";
+    }else{
+      // He's outside the Microsoft set; don't fake a highlight on one of them.
+      nodes.forEach(function(n){ n.classList.remove("on") });
+      active=-1;
+      $("stTag").textContent="DESKTOP"; $("stTag").style.background="#59616D";
+      $("stMsg").innerHTML="You're in <b>"+(a.activeApp||"another app")+"</b>. Nothing in your Microsoft apps needs you.";
+    }
+  }catch(e){
+    if(realMode) return; // transient failure — keep the real view
+    var el=$("onScreen"); el.classList.remove("live"); el.textContent="Tap an app";
+    if(!demoTimer) demoTimer=setInterval(function(){ if(!paused) setActive((active+1)%APPS.length) }, 3800);
+  }
+}
+
 /* --- boot ----------------------------------------------------------------- */
-build(); place(); renderTasks(); setActive(0); load();
+build(); place(); renderTasks(); setActive(0); load(); loadActivity();
 addEventListener("resize", place);
 if(!RM) requestAnimationFrame(tick);
-setInterval(function(){ if(!paused) setActive((active+1)%APPS.length) }, 3800);
+demoTimer=setInterval(function(){ if(!paused && !realMode) setActive((active+1)%APPS.length) }, 3800);
+setInterval(loadActivity, 2000);
 setInterval(function(){ if(live) load() }, 15000);
 })();
 </script>

@@ -1,13 +1,503 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EIOS — Executive Command Center</title>
-    <script type="module" crossorigin src="/assets/index-BJyG8t6w.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CjXmWa_d.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Assistant — executive home</title></head><body>
+<style>
+/* ============================================================================
+   EIOS · Assistant — executive home
+   Design stance: the interface chrome is near-monochrome and quiet; the ONLY
+   colour comes from the real Microsoft product icons. No gradients-as-identity,
+   no glow, no emoji icons. Hairline rules, tight radii, tabular figures.
+   Single light theme — deliberate (the executive finds dark mode confusing).
+   ========================================================================== */
+:root{
+  --bg:#F5F6F8;
+  --surface:#FFFFFF;
+  --surface-2:#FAFBFC;
+  --line:#E7EAEF;
+  --line-2:#D9DEE6;
+  --ink:#0E1116;
+  --ink-2:#59616D;
+  --ink-3:#8C95A1;
+  --good:#0B7A5A; --good-bg:#E8F5F0;
+  --warn:#9A6208; --warn-bg:#FBF3E4;
+  --crit:#B4392B; --crit-bg:#FBEBE8;
+  --focus:#1A6DD8;
+  /* real Microsoft brand colours */
+  --ms-outlook:#0F6CBD; --ms-teams:#5059C9; --ms-cal:#1A6DD8;
+  --ms-onedrive:#0364B8; --ms-todo:#2564CF; --ms-planner:#2E7D32;
+  --r:12px; --r-sm:9px;
+  --sh:0 1px 2px rgba(14,17,22,.04), 0 4px 16px -8px rgba(14,17,22,.14);
+  --sh-2:0 2px 4px rgba(14,17,22,.05), 0 12px 28px -12px rgba(14,17,22,.22);
+  --f:"Segoe UI Variable Display","Segoe UI",-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  --fn:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  --e:cubic-bezier(.2,.7,.3,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);line-height:1.5;-webkit-font-smoothing:antialiased}
+.num{font-family:var(--fn);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+button{font-family:inherit;cursor:pointer}
+a,button,[role=button]{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px}
+
+/* ---- shell --------------------------------------------------------------- */
+.wrap{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:100vh}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+.side{border-right:1px solid var(--line);background:var(--surface);padding:20px 14px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh}
+@media(max-width:900px){.side{position:static;height:auto;flex-direction:row;align-items:center;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}}
+.logo{display:flex;align-items:center;gap:10px;padding:2px 8px}
+.logo .mk{width:28px;height:28px;flex:none}
+.logo b{font-size:14.5px;font-weight:650;letter-spacing:-.01em}
+.logo span{font-size:11px;color:var(--ink-3);display:block;font-weight:500;letter-spacing:.02em;margin-top:-2px}
+.menu{display:flex;flex-direction:column;gap:2px}
+@media(max-width:900px){.menu{flex-direction:row}}
+.menu button{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;padding:9px 10px;border-radius:var(--r-sm);
+  color:var(--ink-2);font-size:13.5px;font-weight:550;text-align:left;transition:background .18s var(--e),color .18s var(--e);white-space:nowrap}
+.menu button svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.menu button:hover{background:var(--surface-2);color:var(--ink)}
+.menu button[aria-current=page]{background:#F0F2F5;color:var(--ink);font-weight:650}
+.side .grow{flex:1}
+@media(max-width:900px){.side .grow{display:none}}
+.who{display:flex;align-items:center;gap:10px;padding:9px 8px;border-top:1px solid var(--line)}
+@media(max-width:900px){.who{border-top:0}}
+.who .av{width:30px;height:30px;border-radius:50%;background:#E7EAEF;color:var(--ink-2);display:grid;place-items:center;font-size:11.5px;font-weight:700;flex:none}
+.who .t{font-size:12.5px;font-weight:600;line-height:1.3}
+.who .s{font-size:11px;color:var(--ink-3)}
+
+main{padding:26px clamp(16px,3vw,36px) 44px;max-width:1240px;width:100%;margin:0 auto}
+
+/* ---- header -------------------------------------------------------------- */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+h1{margin:0;font-size:clamp(21px,2.4vw,27px);font-weight:650;letter-spacing:-.021em;text-wrap:balance}
+.top p{margin:5px 0 0;color:var(--ink-2);font-size:14px}
+.top p b{color:var(--ink);font-weight:650}
+.meta{display:flex;align-items:center;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-2);background:var(--surface);border-radius:99px;
+  padding:6px 11px;font-size:12px;font-weight:600;color:var(--ink-2);transition:.18s var(--e)}
+.pill:hover{border-color:#C3CAD5;color:var(--ink)}
+.pill .d{width:6px;height:6px;border-radius:50%;background:var(--good)}
+.pill .d.off{background:var(--warn)}
+.pill.paused{background:var(--warn-bg);border-color:#EDDFC0;color:var(--warn)}
+.src{font-size:11px;color:var(--ink-3);letter-spacing:.03em;font-weight:600;text-transform:uppercase}
+
+/* ---- layout -------------------------------------------------------------- */
+.cols{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:1024px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.panel .hd{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.panel .hd h2{margin:0;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.panel .bd{padding:16px}
+
+/* ---- graph --------------------------------------------------------------- */
+.graph{position:relative;height:400px}
+@media(max-width:560px){.graph{height:340px}}
+.graph svg.wires{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:7px;
+  background:none;border:0;padding:0;transition:transform .2s var(--e)}
+.node:hover{transform:translate(-50%,-50%) scale(1.06)}
+.node .ic{width:44px;height:44px;border-radius:11px;background:var(--surface);border:1px solid var(--line);
+  display:grid;place-items:center;box-shadow:var(--sh);transition:border-color .2s var(--e),box-shadow .2s var(--e)}
+.node .ic svg{width:24px;height:24px;display:block}
+.node.on .ic{box-shadow:var(--sh-2);border-color:var(--line-2)}
+.node .lb{font-size:11.5px;font-weight:600;color:var(--ink-3);transition:color .2s var(--e);letter-spacing:.005em}
+.node.on .lb{color:var(--ink)}
+.node .ring{position:absolute;top:-5px;left:50%;transform:translateX(-50%);width:54px;height:54px;border-radius:14px;
+  border:1.5px solid currentColor;opacity:0;transition:opacity .25s var(--e)}
+.node.on .ring{opacity:.32}
+
+/* assistant core */
+.core{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:9px}
+.core .disc{position:relative;width:74px;height:74px;border-radius:50%;background:var(--surface);
+  border:1px solid var(--line-2);display:grid;place-items:center;box-shadow:var(--sh-2)}
+.core .disc .mk{width:30px;height:30px}
+.core .arc{position:absolute;inset:-6px;border-radius:50%;border:1.5px solid transparent;
+  border-top-color:var(--ink);border-right-color:var(--ink);opacity:.5;animation:spin 3.6s linear infinite}
+.core.paused .arc{animation-play-state:paused;border-top-color:var(--warn);border-right-color:var(--warn);opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
+.core .cap{font-size:11.5px;font-weight:650;color:var(--ink-2);letter-spacing:.02em}
+
+.status{border-top:1px solid var(--line);padding:13px 16px;display:flex;align-items:center;gap:11px;min-height:56px}
+.status .tag{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3.5px 8px;border-radius:5px;color:#fff;flex:none}
+.status .msg{font-size:13.5px;color:var(--ink-2);font-weight:500}
+.status .msg b{color:var(--ink);font-weight:650}
+
+/* ---- metrics ------------------------------------------------------------- */
+.hero-n{display:flex;align-items:baseline;gap:9px}
+.hero-n .v{font-size:38px;font-weight:680;letter-spacing:-.035em;line-height:1}
+.hero-n .u{font-size:13px;color:var(--ink-2);font-weight:550}
+.sub-n{color:var(--ink-3);font-size:12.5px;margin-top:6px}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line);margin-top:16px}
+.stats div{padding:13px 0 2px;border-right:1px solid var(--line)}
+.stats div:last-child{border-right:0}
+.stats .n{font-size:19px;font-weight:670;letter-spacing:-.02em}
+.stats .l{font-size:11.5px;color:var(--ink-3);margin-top:1px}
+
+/* ---- rows ---------------------------------------------------------------- */
+.row{display:flex;gap:13px;align-items:flex-start;padding:14px 16px;border-bottom:1px solid var(--line);transition:background .18s var(--e)}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--surface-2)}
+.row .bar{width:3px;align-self:stretch;border-radius:2px;flex:none;min-height:34px}
+.row .bar.u{background:var(--crit)} .row .bar.c{background:var(--warn)}
+.row .m{flex:1;min-width:0}
+.row .m .t{font-size:14px;font-weight:620;letter-spacing:-.008em}
+.row .m .d{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.45}
+.row .m .d code{font-family:var(--fn);font-size:11px;background:#F0F2F5;border:1px solid var(--line);
+  padding:1px 5px;border-radius:4px;color:var(--ink-2)}
+.row .go{display:flex;gap:7px;flex:none}
+.btn{border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-size:12.5px;font-weight:600;
+  padding:7px 12px;border-radius:8px;transition:.18s var(--e)}
+.btn:hover{background:#F0F2F5}
+.btn.p{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.p:hover{background:#242A33}
+.empty{padding:28px 16px;text-align:center;color:var(--ink-3);font-size:13px}
+
+/* ---- handoff ------------------------------------------------------------- */
+.tasks{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:16px}
+@media(max-width:640px){.tasks{grid-template-columns:1fr}}
+.task{display:flex;align-items:center;gap:11px;border:1px solid var(--line);background:var(--surface);
+  border-radius:var(--r-sm);padding:11px 12px;font-size:13.5px;font-weight:570;color:var(--ink);text-align:left;
+  transition:border-color .18s var(--e),background .18s var(--e),transform .18s var(--e)}
+.task:hover{border-color:var(--line-2);background:var(--surface-2);transform:translateY(-1px)}
+.task .g{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;flex:none;background:#F0F2F5}
+.task .g svg{width:15px;height:15px}
+.task .ar{margin-left:auto;color:var(--ink-3);font-size:15px;transition:transform .18s var(--e)}
+.task:hover .ar{transform:translateX(2px);color:var(--ink-2)}
+
+/* ---- ask ----------------------------------------------------------------- */
+.ask{position:sticky;bottom:14px;margin-top:16px;display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--line-2);border-radius:var(--r);padding:8px 8px 8px 14px;box-shadow:var(--sh-2)}
+.ask svg.q{width:16px;height:16px;stroke:var(--ink-3);fill:none;stroke-width:1.8;flex:none}
+.ask input{flex:1;border:0;outline:0;background:none;font-size:14.5px;color:var(--ink);font-family:inherit;min-width:0}
+.ask input::placeholder{color:var(--ink-3)}
+.ask .go{width:34px;height:34px;border-radius:8px;border:0;background:var(--ink);display:grid;place-items:center;flex:none;transition:.18s var(--e)}
+.ask .go:hover{background:#242A33}
+.ask .go svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---- toast --------------------------------------------------------------- */
+.toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;padding:0 12px}
+.toast{background:var(--ink);color:#fff;border-radius:10px;padding:11px 15px;font-size:13.5px;font-weight:550;
+  box-shadow:0 12px 32px -10px rgba(14,17,22,.5);display:flex;align-items:center;gap:10px;animation:rise .28s var(--e);max-width:min(92vw,460px)}
+.toast .sp{width:14px;height:14px;border-radius:50%;border:1.8px solid rgba(255,255,255,.3);border-top-color:#fff;animation:spin .7s linear infinite;flex:none}
+.toast svg{width:14px;height:14px;stroke:#5FD3A6;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+.foot{margin-top:18px;text-align:center;font-size:11.5px;color:var(--ink-3)}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+
+<div class="wrap">
+  <aside class="side">
+    <div class="logo">
+      <svg class="mk" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="#0E1116"/>
+        <circle cx="16" cy="16" r="7.5" fill="none" stroke="#fff" stroke-width="1.7" opacity=".35"/>
+        <path d="M16 8.5a7.5 7.5 0 0 1 7.5 7.5" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
+        <circle cx="16" cy="16" r="2.6" fill="#fff"/>
+      </svg>
+      <div><b>Assistant</b><span>Products · Deputy Chief</span></div>
+    </div>
+    <nav class="menu" aria-label="Sections">
+      <button aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.8V20h13V9.8"/></svg>Today</button>
+      <button><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>Inbox</button>
+      <button><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h9"/></svg>Decisions</button>
+      <button><svg viewBox="0 0 24 24"><path d="M7 10h10M7 14h6"/><rect x="3" y="4" width="18" height="16" rx="3"/></svg>Activity</button>
+    </nav>
+    <div class="grow"></div>
+    <div class="who">
+      <div class="av">DC</div>
+      <div><div class="t">Deputy Chief</div><div class="s">Products</div></div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="top">
+      <div>
+        <h1 id="greet">Good morning.</h1>
+        <p id="lede">Loading your day…</p>
+      </div>
+      <div class="meta">
+        <span class="src" id="srcTag">·</span>
+        <button class="pill" id="pauseBtn"><span class="d" id="pauseDot"></span><span id="pauseTxt">Working</span></button>
+      </div>
+    </header>
+
+    <section class="cols">
+      <!-- graph -->
+      <div class="panel">
+        <div class="hd">
+          <h2>Your Microsoft apps</h2>
+          <span style="font-size:11.5px;color:var(--ink-3)">Tap an app</span>
+        </div>
+        <div class="graph" id="graph">
+          <svg class="wires" id="wires" aria-hidden="true"></svg>
+          <div class="core" id="core">
+            <div class="disc">
+              <div class="arc"></div>
+              <svg class="mk" viewBox="0 0 32 32" aria-hidden="true">
+                <circle cx="16" cy="16" r="9" fill="none" stroke="#0E1116" stroke-width="1.4" opacity=".22"/>
+                <path d="M16 7a9 9 0 0 1 9 9" fill="none" stroke="#0E1116" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="16" cy="16" r="3.2" fill="#0E1116"/>
+              </svg>
+            </div>
+            <div class="cap" id="coreCap">Assistant</div>
+          </div>
+        </div>
+        <div class="status">
+          <span class="tag" id="stTag" style="background:var(--ms-outlook)">OUTLOOK</span>
+          <span class="msg" id="stMsg">Reading your inbox.</span>
+        </div>
+      </div>
+
+      <!-- metrics -->
+      <div class="panel">
+        <div class="hd"><h2>Handled for you</h2><span style="font-size:11.5px;color:var(--ink-3)">Today</span></div>
+        <div class="bd">
+          <div class="hero-n"><span class="v num" id="saved">2h 40m</span><span class="u">back in your day</span></div>
+          <div class="sub-n" id="savedSub">About 9 hours this week.</div>
+          <div class="stats">
+            <div><div class="n num" id="mEmail">211</div><div class="l">triaged</div></div>
+            <div><div class="n num" id="mMeet">4</div><div class="l">summarised</div></div>
+            <div><div class="n num" id="mDeleg">6</div><div class="l">delegated</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- needs you -->
+    <section class="panel" style="margin-top:16px">
+      <div class="hd"><h2>Needs you</h2><span style="font-size:11.5px;color:var(--ink-3)" id="needCount">—</span></div>
+      <div id="needs"><div class="empty">Loading…</div></div>
+    </section>
+
+    <!-- handoff -->
+    <section class="panel" style="margin-top:16px">
+      <div class="hd"><h2>Hand it over</h2><span style="font-size:11.5px;color:var(--ink-3)">One tap</span></div>
+      <div class="tasks" id="tasks"></div>
+    </section>
+
+    <div class="ask">
+      <svg class="q" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+      <input id="askIn" placeholder="Ask anything — “what needs me before 10?”" aria-label="Ask the assistant">
+      <button class="go" id="askGo" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M5 12h13M12 5.5 18.5 12 12 18.5"/></svg></button>
+    </div>
+    <p class="foot">Never acts above ₹10,00,000 or on anything critical without you.</p>
+  </main>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+var RM = matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+/* --- real Microsoft product icons (faithful SVG, official brand colours) --- */
+var ICON = {
+  outlook:'<svg viewBox="0 0 32 32"><path d="M18 6h11.2c.99 0 1.8.81 1.8 1.8v16.4c0 .99-.81 1.8-1.8 1.8H18V6z" fill="#0F6CBD"/><path d="M31 9.4v13.2l-6.5-6.6L31 9.4z" fill="#0A4D8C" opacity=".35"/><path d="M18 10.2h13v1.6l-6.5 4.6L18 11.8v-1.6z" fill="#fff" opacity=".9"/><path d="M18 12.6l6.5 4.6L31 12.6v9.8c0 .6-.5 1-1 1H19c-.6 0-1-.4-1-1v-9.8z" fill="#fff"/><path d="M1 6.6 16 4v24L1 25.4V6.6z" fill="#0A4D8C"/><path d="M8.6 10.6c2.6 0 4.2 1.9 4.2 5s-1.7 5.2-4.3 5.2S4.2 18.8 4.2 15.7s1.7-5.1 4.4-5.1zm-.1 2.2c-1.2 0-1.9 1.1-1.9 2.9s.7 2.9 1.9 2.9 1.9-1.1 1.9-2.9-.7-2.9-1.9-2.9z" fill="#fff"/></svg>',
+  teams:'<svg viewBox="0 0 32 32"><circle cx="23.4" cy="7.8" r="3.1" fill="#5059C9"/><circle cx="15.4" cy="6.6" r="4.1" fill="#7B83EB"/><path d="M25.6 12.2h-5.9v8.4c0 2.4 1.9 4.3 4.3 4.3h.2c2.4 0 4.3-1.9 4.3-4.3v-5.9c0-1.4-1.1-2.5-2.5-2.5h-.4z" fill="#5059C9" opacity=".9"/><path d="M20.3 12.2H9.6c-1 0-1.8.8-1.8 1.8v8.6c0 3.9 3.2 7.1 7.1 7.1s7.1-3.2 7.1-7.1v-8.6c0-1-.8-1.8-1.7-1.8z" fill="#7B83EB"/><path d="M16 10.6H8.1a8 8 0 0 0-.3 2.2v.4h8.2c.9 0 1.6.7 1.6 1.6v11c0 .9-.7 1.6-1.6 1.6H8.6a7.1 7.1 0 0 0 6.3 3.8c3.9 0 7.1-3.2 7.1-7.1V14c0-1.9-1.5-3.4-3.4-3.4H16z" fill="#000" opacity=".08"/><rect x="1" y="8.4" width="15.2" height="15.2" rx="2" fill="#4B53BC"/><path d="M12.5 12.1H4.7v1.9h2.8v7.6h2.2V14h2.8v-1.9z" fill="#fff"/></svg>',
+  calendar:'<svg viewBox="0 0 32 32"><rect x="3" y="5.5" width="26" height="22" rx="2.6" fill="#fff" stroke="#D9DEE6" stroke-width="1"/><path d="M3 10.6h26v2.2H3z" fill="#1A6DD8"/><path d="M3 8.1c0-1.4 1.2-2.6 2.6-2.6h20.8c1.4 0 2.6 1.2 2.6 2.6v2.5H3V8.1z" fill="#1A6DD8"/><rect x="8.2" y="3" width="2.2" height="5" rx="1.1" fill="#0F4C9E"/><rect x="21.6" y="3" width="2.2" height="5" rx="1.1" fill="#0F4C9E"/><rect x="7" y="15.4" width="4.6" height="3.5" rx="1" fill="#1A6DD8" opacity=".85"/><rect x="13.7" y="15.4" width="4.6" height="3.5" rx="1" fill="#C9D8EE"/><rect x="20.4" y="15.4" width="4.6" height="3.5" rx="1" fill="#C9D8EE"/><rect x="7" y="20.7" width="4.6" height="3.5" rx="1" fill="#C9D8EE"/><rect x="13.7" y="20.7" width="4.6" height="3.5" rx="1" fill="#1A6DD8" opacity=".55"/><rect x="20.4" y="20.7" width="4.6" height="3.5" rx="1" fill="#C9D8EE"/></svg>',
+  onedrive:'<svg viewBox="0 0 32 32"><path d="M12.6 24.5h13.9a5 5 0 0 0 .8-9.9 6.8 6.8 0 0 0-9.3-5.2 7.9 7.9 0 0 0-11.4 4.6A5.7 5.7 0 0 0 7 24.5h5.6z" fill="#0364B8"/><path d="M26.5 24.5a5 5 0 0 0 .8-9.9 6.8 6.8 0 0 0-6.6-5.5c-1 0-1.9.2-2.7.6l-6.9 14.8h15.4z" fill="#0F78D4"/><path d="M6.6 14a7.9 7.9 0 0 1 11.4-4.6 6.8 6.8 0 0 0-1.7-.2 7.6 7.6 0 0 0-7.4 6.2A5.7 5.7 0 0 0 7 24.5h-.4a5.7 5.7 0 0 1 0-10.5z" fill="#28A8EA" opacity=".9"/><path d="M27.3 14.6a5 5 0 0 1-.8 9.9H7a5.7 5.7 0 0 1-2.9-.8h23.2z" fill="#14447D" opacity=".22"/></svg>',
+  todo:'<svg viewBox="0 0 32 32"><rect x="3" y="4" width="26" height="24" rx="3" fill="#2564CF"/><rect x="3" y="4" width="8.2" height="24" rx="3" fill="#185ABD"/><rect x="14.2" y="9.6" width="11.4" height="1.9" rx=".95" fill="#fff" opacity=".92"/><rect x="14.2" y="15.1" width="11.4" height="1.9" rx=".95" fill="#fff" opacity=".62"/><rect x="14.2" y="20.6" width="7.6" height="1.9" rx=".95" fill="#fff" opacity=".42"/><path d="m5.6 10.7 1.5 1.6 2.5-3" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="m5.6 16.2 1.5 1.6 2.5-3" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/></svg>',
+  planner:'<svg viewBox="0 0 32 32"><path d="M8 6h16a2.5 2.5 0 0 1 2.5 2.5v18A2.5 2.5 0 0 1 24 29H8a2.5 2.5 0 0 1-2.5-2.5v-18A2.5 2.5 0 0 1 8 6z" fill="#2E7D32"/><path d="M8 6h8v23H8a2.5 2.5 0 0 1-2.5-2.5v-18A2.5 2.5 0 0 1 8 6z" fill="#1B5E20"/><rect x="11.5" y="3" width="9" height="5.2" rx="1.8" fill="#43A047"/><path d="m9.4 14.4 1.6 1.7 3.2-3.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="m9.4 21.4 1.6 1.7 3.2-3.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/><rect x="17.4" y="13.4" width="6.4" height="1.8" rx=".9" fill="#fff" opacity=".9"/><rect x="17.4" y="20.4" width="6.4" height="1.8" rx=".9" fill="#fff" opacity=".5"/></svg>'
+};
+
+var APPS = [
+  {k:"outlook",  n:"Outlook",  c:"#0F6CBD", msgs:["Reading your inbox — <b>triaged 47</b>, 3 flagged for you.","Filed 44 emails you'd never have needed."]},
+  {k:"teams",    n:"Teams",    c:"#5059C9", msgs:["<b>2 mentions</b> — both handled.","Caught a UPI thread; looped in VP – IT Operations."]},
+  {k:"calendar", n:"Calendar", c:"#1A6DD8", msgs:["Your <b>3 PM moved</b> — room rebooked.","Protected your 11–12 focus block."]},
+  {k:"onedrive", n:"OneDrive", c:"#0364B8", msgs:["Board pack template pulled — <b>ready to fill</b>.","Found last quarter's SLA report."]},
+  {k:"todo",     n:"To Do",    c:"#2564CF", msgs:["Closed 6 tasks — <b>nothing slipped</b>.","Added “Approve RBI plan” to your list."]},
+  {k:"planner",  n:"Planner",  c:"#2E7D32", msgs:["Release 18 at <b>71%</b> — on watch, not on fire.","Nudged 2 owners on overdue items."]}
+];
+
+/* --- demo fallback (used when no backend is reachable) -------------------- */
+var DEMO = {
+  live:false,
+  lede:{handled:214, needs:3},
+  needs:[
+    {sev:"u",t:"Approve the AxisPay SLA breach notice",d:'Third breach this quarter. Withhold ₹1.2L per contract. <code>DT-009</code>',a:"Approve",done:"Approved — sent to Vendor Management."},
+    {sev:"c",t:"Sign off the RBI tokenisation plan",d:'90-day clock running. ~6 sprints, 2 systems. <code>DT-010</code>',a:"Approve",done:"Approved — Compliance Eng owns the plan."},
+    {sev:"c",t:"Merchant escalation is waiting on your word",d:'Failed ₹4.2L settlement. A reply is drafted; VP – IT Ops on standby.',a:"Send reply",done:"Sent — VP – IT Operations looped in."}
+  ]
+};
+
+var TASKS = [
+  {k:"outlook", t:"Draft my status update", w:"Drafting your status update…", d:"Draft ready in Outlook — “UPI performance update”."},
+  {k:"teams",   t:"Who's on the UPI issue?", w:"Checking Teams and the incident…", d:"VP – IT Operations owns INC-4521. Checkpoint 10:00."},
+  {k:"calendar",t:"Summarise my 3 PM",       w:"Summarising your 3 PM…", d:"One-pager ready — 3 decisions, 2 actions for you."},
+  {k:"todo",    t:"Clear low-priority mail",  w:"Clearing low-priority mail…", d:"Filed 44 emails. Nothing important was hidden."}
+];
+
+var $ = function(id){return document.getElementById(id)};
+var paused=false, active=0, live=false;
+
+/* --- graph ---------------------------------------------------------------- */
+var graph=$("graph"), wires=$("wires"), nodes=[], paths=[], dots=[];
+function build(){
+  APPS.forEach(function(a,i){
+    var b=document.createElement("button");
+    b.className="node"; b.style.color=a.c;
+    b.innerHTML='<div class="ic">'+ICON[a.k]+'<div class="ring"></div></div><div class="lb">'+a.n+'</div>';
+    b.setAttribute("aria-label",a.n);
+    b.addEventListener("click",function(){setActive(i)});
+    graph.appendChild(b); nodes.push(b);
+  });
+}
+function place(){
+  var r=graph.getBoundingClientRect(), cx=r.width/2, cy=r.height/2-8;
+  var R=Math.min(r.width*0.40, r.height*0.40);
+  wires.setAttribute("viewBox","0 0 "+r.width+" "+r.height);
+  wires.innerHTML=""; paths=[]; dots=[];
+  $("core").style.left=cx+"px"; $("core").style.top=cy+"px";
+  APPS.forEach(function(a,i){
+    var ang=-Math.PI/2 + i*(2*Math.PI/APPS.length);
+    var x=cx+Math.cos(ang)*R*1.12, y=cy+Math.sin(ang)*R*0.94;
+    nodes[i].style.left=x+"px"; nodes[i].style.top=y+"px";
+    var mx=(x+cx)/2, my=(y+cy)/2-14;
+    var p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d","M"+x+","+y+" Q"+mx+","+my+" "+cx+","+cy);
+    p.setAttribute("fill","none"); p.setAttribute("stroke",a.c);
+    p.setAttribute("stroke-width","1"); p.setAttribute("stroke-opacity",".18");
+    wires.appendChild(p); paths.push(p);
+    for(var k=0;k<2;k++){
+      var d=document.createElementNS("http://www.w3.org/2000/svg","circle");
+      d.setAttribute("r","2"); d.setAttribute("fill",a.c);
+      wires.appendChild(d); dots.push({el:d,path:p,i:i,off:k/2});
+    }
+  });
+}
+function tick(now){
+  var t=now/1000;
+  dots.forEach(function(d){
+    var on=(d.i===active), L=d.path.getTotalLength();
+    var sp=on?0.16:0.07;
+    var u=((t*sp + d.off + d.i*0.11) % 1);
+    var pt=d.path.getPointAtLength(u*L);
+    d.el.setAttribute("cx",pt.x); d.el.setAttribute("cy",pt.y);
+    d.el.setAttribute("r", on?2.6:1.8);
+    d.el.setAttribute("fill-opacity", paused?0.15:(on?0.95:0.4));
+  });
+  paths.forEach(function(p,i){ p.setAttribute("stroke-opacity", i===active?".42":".14") });
+  requestAnimationFrame(tick);
+}
+function setActive(i){
+  active=i; var a=APPS[i];
+  nodes.forEach(function(n,j){ n.classList.toggle("on", j===i) });
+  $("stTag").textContent=a.n.toUpperCase(); $("stTag").style.background=a.c;
+  $("stMsg").innerHTML=a.msgs[Math.floor(Math.random()*a.msgs.length)];
+}
+
+/* --- toasts --------------------------------------------------------------- */
+function toast(msg, spin, ms){
+  var el=document.createElement("div"); el.className="toast";
+  el.innerHTML=(spin?'<span class="sp"></span>':'<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>')+"<span>"+msg+"</span>";
+  $("toasts").appendChild(el);
+  setTimeout(function(){el.style.transition="opacity .3s,transform .3s";el.style.opacity=0;el.style.transform="translateY(6px)";
+    setTimeout(function(){el.remove()},300)}, ms||(spin?1400:3000));
+}
+
+/* --- render --------------------------------------------------------------- */
+function renderNeeds(list){
+  var box=$("needs");
+  if(!list.length){ box.innerHTML='<div class="empty">Nothing needs you. Genuinely.</div>'; $("needCount").textContent="0"; return }
+  box.innerHTML="";
+  list.forEach(function(n){
+    var row=document.createElement("div"); row.className="row";
+    row.innerHTML='<span class="bar '+n.sev+'"></span><div class="m"><div class="t"></div><div class="d"></div></div>'+
+      '<div class="go"><button class="btn">Review</button><button class="btn p"></button></div>';
+    row.querySelector(".t").textContent=n.t;
+    row.querySelector(".d").innerHTML=n.d;
+    var pb=row.querySelector(".btn.p"); pb.textContent=n.a;
+    pb.addEventListener("click",function(){
+      row.style.transition="opacity .3s var(--e)"; row.style.opacity=".4";
+      pb.disabled=true; toast(n.done);
+      if(live && n.id){ fetch("/api/decisions/"+n.id+"/resolve",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({decision:"approved"})}).catch(function(){}) }
+    });
+    box.appendChild(row);
+  });
+  $("needCount").textContent=list.length===1?"1 item":list.length+" items";
+}
+function renderTasks(){
+  var box=$("tasks"); box.innerHTML="";
+  TASKS.forEach(function(t){
+    var b=document.createElement("button"); b.className="task";
+    b.innerHTML='<span class="g">'+ICON[t.k]+'</span><span>'+t.t+'</span><span class="ar">›</span>';
+    b.addEventListener("click",function(){
+      toast(t.w,true); setTimeout(function(){toast(t.d)},1400);
+    });
+    box.appendChild(b);
+  });
+}
+
+/* --- live data ------------------------------------------------------------ */
+function sevOf(p){ return p==="urgent"?"u":"c" }
+async function load(){
+  try{
+    var ctl=new AbortController(); setTimeout(function(){ctl.abort()},2500);
+    var [ov,pulse,sig,dec] = await Promise.all([
+      fetch("/api/overview",{signal:ctl.signal}).then(r=>r.json()),
+      fetch("/api/pulse",{signal:ctl.signal}).then(r=>r.json()),
+      fetch("/api/signals",{signal:ctl.signal}).then(r=>r.json()),
+      fetch("/api/decisions",{signal:ctl.signal}).then(r=>r.json())
+    ]);
+    live=true; $("srcTag").textContent="Live";
+    var att=(pulse.attention||{});
+    var exec=att.forExecutive||[];
+    var pend=(dec||[]).filter(function(d){return d.status==="pending"});
+    var handled=(att.handledCount||0)+((sig||[]).filter(function(s){return s.handled}).length);
+    $("greet").textContent="Good morning, "+((ov.executive&&ov.executive.name)||"Deputy Chief")+".";
+    $("lede").innerHTML="Handled <b>"+handled+"</b> since 5 AM. <b>"+(exec.length+pend.length)+"</b> need you.";
+    var hrs=(att.hoursReclaimed||0);
+    $("saved").textContent=Math.floor(hrs)+"h "+Math.round((hrs%1)*60)+"m";
+    $("savedSub").textContent="Organization health "+(pulse.organizationHealth||0)+"/100 · tick "+(pulse.tick||0)+".";
+    $("mEmail").textContent=(sig||[]).length;
+    $("mMeet").textContent=(pulse.offices||[]).length;
+    $("mDeleg").textContent=att.delegated?att.delegated.length:0;
+    var rows=exec.map(function(a){return{sev:"u",t:a.title,d:(a.why||"")+" — "+(a.recommendedAction||""),a:"Handle",done:"Done."}})
+      .concat(pend.map(function(d){return{sev:d.risk==="High"?"u":"c",id:d.id,t:d.type+" — "+(d.amountLabel||""),
+        d:d.summary+' <code>'+d.id+'</code>',a:"Approve",done:"Approved "+d.id+" — logged to the decision journal."}}));
+    renderNeeds(rows.slice(0,5));
+    setPaused(!!pulse.paused);
+  }catch(e){
+    live=false; $("srcTag").textContent="Demo data";
+    $("greet").textContent="Good morning, Deputy Chief.";
+    $("lede").innerHTML="Handled <b>"+DEMO.lede.handled+"</b> since 5 AM. <b>"+DEMO.lede.needs+"</b> need you.";
+    renderNeeds(DEMO.needs);
+  }
+}
+
+/* --- pause ---------------------------------------------------------------- */
+function setPaused(p){
+  paused=p;
+  $("pauseBtn").classList.toggle("paused",p);
+  $("pauseDot").classList.toggle("off",p);
+  $("pauseTxt").textContent=p?"Paused":"Working";
+  $("core").classList.toggle("paused",p);
+  $("coreCap").textContent=p?"Paused — your turn":"Assistant";
+}
+$("pauseBtn").addEventListener("click",function(){
+  var next=!paused; setPaused(next);
+  toast(next?"Paused. Take your time — it'll wait.":"Back on it.");
+  if(live) fetch("/api/bot/"+(next?"pause":"resume"),{method:"POST"}).catch(function(){});
+});
+
+/* --- ask ------------------------------------------------------------------ */
+async function ask(){
+  var v=$("askIn").value.trim(); if(!v) return;
+  $("askIn").value=""; toast("Thinking…",true,60000);
+  try{
+    if(!live) throw 0;
+    var r=await fetch("/api/command",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({text:v})}).then(r=>r.json());
+    $("toasts").innerHTML=""; toast(r.reply||"No answer.",false,7000);
+  }catch(e){ $("toasts").innerHTML=""; toast("Connect the assistant to answer live questions.",false,4000) }
+}
+$("askGo").addEventListener("click",ask);
+$("askIn").addEventListener("keydown",function(e){ if(e.key==="Enter") ask() });
+
+/* --- boot ----------------------------------------------------------------- */
+build(); place(); renderTasks(); setActive(0); load();
+addEventListener("resize", place);
+if(!RM) requestAnimationFrame(tick);
+setInterval(function(){ if(!paused) setActive((active+1)%APPS.length) }, 3800);
+setInterval(function(){ if(live) load() }, 15000);
+})();
+</script>
+</body></html>

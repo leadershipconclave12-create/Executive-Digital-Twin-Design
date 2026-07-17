@@ -39,20 +39,26 @@ type Meeting struct {
 // Mailbox is the result of one local read. Available=false is a first-class,
 // honest outcome (Outlook not installed / not signed in) — never faked.
 type Mailbox struct {
-	Available bool      `json:"available"`
-	Error     string    `json:"error,omitempty"`
-	Total     int       `json:"total"`
-	Unread    int       `json:"unread"`
-	Messages  []Message `json:"messages"`
-	Meetings  []Meeting `json:"meetings"`
-	ReadAt    string    `json:"readAt"`
+	Available bool   `json:"available"`
+	Error     string `json:"error,omitempty"`
+	// Reason is a machine-readable diagnosis when Available is false:
+	// new_outlook_only | no_outlook | no_profile | com_error | unsupported_os
+	Reason string `json:"reason,omitempty"`
+	// Fix is the concrete next step for a human.
+	Fix      string    `json:"fix,omitempty"`
+	Total    int       `json:"total"`
+	Unread   int       `json:"unread"`
+	Messages []Message `json:"messages"`
+	Meetings []Meeting `json:"meetings"`
+	ReadAt   string    `json:"readAt"`
 }
 
 // ReadMailbox runs the embedded PowerShell bridge and parses its JSON.
 // It is read-only and needs no elevation.
 func ReadMailbox(limit int) Mailbox {
 	if runtime.GOOS != "windows" {
-		return Mailbox{Available: false, Error: "Outlook COM is Windows-only; run the agent on his laptop."}
+		return Mailbox{Available: false, Reason: "unsupported_os",
+			Error: "Outlook COM is Windows-only; run the agent on his laptop."}
 	}
 	dir, err := os.MkdirTemp("", "eios-agent")
 	if err != nil {

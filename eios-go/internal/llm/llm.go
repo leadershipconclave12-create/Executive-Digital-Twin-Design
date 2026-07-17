@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -15,12 +16,49 @@ import (
 
 type Pricing struct{ InputPer1M, OutputPer1M float64 }
 
+// USD per 1M tokens. Unknown models fall back to frontier pricing — over-
+// estimating spend is safe; under-estimating is how a budget blows silently.
 var defaultPricing = map[string]Pricing{
-	"gpt-4o-mini":       {0.15, 0.60},
-	"gpt-4o":            {2.50, 10.00},
-	"claude-haiku-4-5":  {1.00, 5.00},
-	"claude-sonnet-5":   {3.00, 15.00},
-	"claude-opus-4-8":   {5.00, 25.00},
+	// Anthropic
+	"claude-haiku-4-5":            {1.00, 5.00},
+	"claude-haiku-4-5-20251001":   {1.00, 5.00},
+	"claude-sonnet-4-6":           {3.00, 15.00},
+	"claude-sonnet-5":             {3.00, 15.00},
+	"claude-opus-4-8":             {5.00, 25.00},
+	// OpenAI
+	"gpt-4o-mini": {0.15, 0.60},
+	"gpt-4o":      {2.50, 10.00},
+	// AiNxt in-house models run on NPCI's own infrastructure: no per-token
+	// charge, and nothing leaves the bank. This is what makes 300 triage calls
+	// a day cost literally nothing.
+	"qwen-3.6-35B-A3B-128K": {0, 0},
+	"qwen-3.6-27B":          {0, 0},
+	"gemma-4-31B-it-128K":   {0, 0},
+	"deepseek-v4-flash":     {0, 0},
+	"glm-5.1-fp8-128K":      {0, 0},
+	"glm-5.2-fp8-128K":      {0, 0},
+	"kimi-k2.7-code-128K":   {0, 0},
+}
+
+// parsePricing lets a gateway that bills differently override the table:
+//
+//	EIOS_LLM_PRICING={"my-model":{"inputPer1M":0.5,"outputPer1M":1.5}}
+func parsePricing() map[string]Pricing {
+	out := map[string]Pricing{}
+	for k, v := range defaultPricing {
+		out[k] = v
+	}
+	raw := os.Getenv("EIOS_LLM_PRICING")
+	if raw == "" {
+		return out
+	}
+	var over map[string]Pricing
+	if err := json.Unmarshal([]byte(raw), &over); err == nil {
+		for k, v := range over {
+			out[k] = v
+		}
+	}
+	return out
 }
 
 type Call struct {
@@ -106,10 +144,41 @@ type Provider struct {
 func New(baseURL, apiKey, small, frontier string, budget float64) *Provider {
 	return &Provider{
 		baseURL: strings.TrimRight(baseURL, "/"), apiKey: apiKey,
-		small: small, frontier: frontier, pricing: defaultPricing,
+		small: small, frontier: frontier, pricing: parsePricing(),
 		Ledger: &Ledger{budget: budget},
 		client: &http.Client{Timeout: 60 * time.Second},
 	}
+}
+
+// Models asks the gateway what it actually serves (GET /models). Used to verify
+// exact model ids rather than guessing them from a console screenshot.
+func (p *Provider) Models() ([]string, error) {
+	if !p.Configured() {
+		return nil, fmt.Errorf("no LLM configured")
+	}
+	req, _ := http.NewRequest("GET", p.baseURL+"/models", nil)
+	if p.apiKey != "" {
+		req.Header.Set("authorization", "Bearer "+p.apiKey)
+		req.Header.Set("x-api-key", p.apiKey)
+	}
+	res, err := p.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	var out struct {
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&out); err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(out.Data))
+	for _, m := range out.Data {
+		ids = append(ids, m.ID)
+	}
+	return ids, nil
 }
 
 func (p *Provider) Configured() bool { return p.baseURL != "" }

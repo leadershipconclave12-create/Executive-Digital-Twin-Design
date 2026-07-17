@@ -11,6 +11,37 @@
 param([int]$Limit = 25)
 
 $ErrorActionPreference = "Stop"
+
+# ---------------------------------------------------------------------------
+# Pre-flight: work out WHICH Outlook is on this machine before touching COM.
+# Only CLASSIC desktop Outlook exposes the Outlook.Application automation
+# interface. The "new Outlook" (Microsoft.OutlookForWindows / olk.exe) is a web
+# wrapper with NO COM at all — for that one, local reading is impossible and the
+# only route to mail is Microsoft Graph (which needs tenant admin consent).
+# Report that precisely rather than surfacing a raw HRESULT.
+# ---------------------------------------------------------------------------
+$hasClassic = Test-Path "Registry::HKEY_CLASSES_ROOT\Outlook.Application"
+if (-not $hasClassic) {
+    $newOutlook = $null
+    try { $newOutlook = Get-AppxPackage -Name "Microsoft.OutlookForWindows" -ErrorAction SilentlyContinue } catch { }
+    if ($newOutlook) {
+        [pscustomobject]@{
+            available = $false
+            reason    = "new_outlook_only"
+            error     = "Only the NEW Outlook (Store app) is installed. It exposes no COM automation, so mail cannot be read locally."
+            fix       = "Install/enable classic Outlook (Microsoft 365 Apps for Enterprise), or toggle 'New Outlook' off to switch back to classic. Otherwise mail needs Microsoft Graph + tenant admin consent."
+        } | ConvertTo-Json -Compress
+        exit 0
+    }
+    [pscustomobject]@{
+        available = $false
+        reason    = "no_outlook"
+        error     = "Classic Outlook is not installed on this machine."
+        fix       = "Install classic desktop Outlook (Microsoft 365 Apps), sign in once, then retry."
+    } | ConvertTo-Json -Compress
+    exit 0
+}
+
 try {
     $ol = New-Object -ComObject Outlook.Application
     $ns = $ol.GetNamespace("MAPI")
@@ -69,8 +100,16 @@ try {
     } | ConvertTo-Json -Depth 4 -Compress
 }
 catch {
+    # Classic Outlook is registered but the read still failed — most often no
+    # mail profile has been configured yet (never signed in).
+    $msg = [string]$_.Exception.Message
+    $reason = "com_error"
+    $fix = "Open Outlook once, sign in, and let it finish creating your mail profile; then retry."
+    if ($msg -match "profile|MAPI") { $reason = "no_profile" }
     [pscustomobject]@{
         available = $false
-        error     = [string]$_.Exception.Message
+        reason    = $reason
+        error     = $msg
+        fix       = $fix
     } | ConvertTo-Json -Compress
 }

@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -146,7 +147,16 @@ func New(baseURL, apiKey, small, frontier string, budget float64) *Provider {
 		baseURL: strings.TrimRight(baseURL, "/"), apiKey: apiKey,
 		small: small, frontier: frontier, pricing: parsePricing(),
 		Ledger: &Ledger{budget: budget},
-		client: &http.Client{Timeout: 60 * time.Second},
+		// Overall timeout is generous (frontier reasoning is slow); the DIAL
+		// timeout is tight so an unreachable gateway (VPN off, wrong network)
+		// fails in seconds and rule-based fallbacks take over immediately.
+		client: &http.Client{
+			Timeout: 90 * time.Second,
+			Transport: &http.Transport{
+				DialContext:         (&net.Dialer{Timeout: 5 * time.Second}).DialContext,
+				TLSHandshakeTimeout: 10 * time.Second,
+			},
+		},
 	}
 }
 

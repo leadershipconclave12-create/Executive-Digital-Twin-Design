@@ -20,28 +20,33 @@ import (
 	"eios/internal/governance"
 	"eios/internal/ingest"
 	"eios/internal/llm"
+	"eios/internal/meetings"
 	"eios/internal/memory"
 	"eios/internal/services"
+	"eios/internal/study"
 	"eios/internal/twin"
 )
 
 type Server struct {
-	cfg    config.Config
-	store  *data.Store
-	audit  *governance.AuditLog
-	pulse  *twin.Pulse
-	llm    *llm.Provider
-	agent  *agent.Agent
-	memory *memory.Fabric
-	wisdom *wisdomEngine
-	limits governance.Limits
-	user   domain.User
+	cfg      config.Config
+	store    *data.Store
+	audit    *governance.AuditLog
+	pulse    *twin.Pulse
+	llm      *llm.Provider
+	agent    *agent.Agent
+	memory   *memory.Fabric
+	wisdom   *wisdomEngine
+	meetings *meetings.Engine
+	study    *study.Engine
+	limits   governance.Limits
+	user     domain.User
 }
 
 func NewServer(cfg config.Config, store *data.Store, audit *governance.AuditLog, pulse *twin.Pulse, provider *llm.Provider, ag *agent.Agent, mem *memory.Fabric) *Server {
 	return &Server{
 		cfg: cfg, store: store, audit: audit, pulse: pulse, llm: provider, agent: ag,
 		memory: mem, wisdom: newWisdom(),
+		meetings: meetings.NewEngine(mem, provider), study: study.NewEngine(mem, provider),
 		limits: governance.Limits{AutonomousFinancialLimitInr: cfg.AutonomousFinancialLimitInr, AutonomousConfidence: cfg.AutonomousConfidence},
 		user:   data.DeputyChief(),
 	}
@@ -250,6 +255,9 @@ func (s *Server) Handler(static http.Handler) http.Handler {
 
 	// organizational memory + knowledge (real fabric: graph recall, egress gate)
 	s.registerMemory(mux)
+
+	// the meeting twin, document study, grounded responder, presence
+	s.registerMeetings(mux)
 
 	// static UI (SPA) for everything else
 	mux.Handle("/", spaFallback(static))

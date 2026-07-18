@@ -257,6 +257,21 @@ h1{margin:0;font-size:clamp(21px,2.4vw,27px);font-weight:650;letter-spacing:-.02
 .root .kd{width:7px;height:7px;border-radius:2px;background:#0364B8;flex:none}
 .root .kd.sp{background:#2E7D32}
 .li .op{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---- meetings ------------------------------------------------------------ */
+.mlab{font-size:10.5px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);margin:14px 0 6px}
+.mlab:first-child{margin-top:0}
+.mlist{font-size:12.5px;color:var(--ink-2);line-height:1.55}
+.mlist div{padding:3px 0;border-bottom:1px solid var(--line)}
+.mlist div:last-child{border-bottom:0}
+.ta{width:100%;min-height:88px;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:10px 12px;
+  font-size:12.5px;font-family:var(--fn);color:var(--ink);background:var(--surface);resize:vertical;outline:none}
+.ta:focus{border-color:var(--ink-3)}
+.mrow{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.ans{margin-top:10px;padding:11px 13px;border:1px solid var(--line);border-left:3px solid var(--ink);border-radius:var(--r-sm);
+  background:var(--surface-2);font-size:13px;color:var(--ink);line-height:1.55}
+.ans .meta{margin-top:6px;font-size:11px;color:var(--ink-3)}
+.li.sel{background:var(--surface-2);border-radius:var(--r-sm);margin:0 -4px;padding-left:8px;padding-right:8px}
 </style>
 
 <div class="wrap">
@@ -276,6 +291,7 @@ h1{margin:0;font-size:clamp(21px,2.4vw,27px);font-weight:650;letter-spacing:-.02
       <button><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h9"/></svg>Decisions</button>
       <button><svg viewBox="0 0 24 24"><path d="M7 10h10M7 14h6"/><rect x="3" y="4" width="18" height="16" rx="3"/></svg>Activity</button>
       <button><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg>Workspace</button>
+      <button><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15.8 14.6c2.6.2 4.2 1.7 4.7 4.4"/></svg>Meetings</button>
     </nav>
     <div class="grow"></div>
     <div class="who">
@@ -430,6 +446,42 @@ h1{margin:0;font-size:clamp(21px,2.4vw,27px);font-weight:650;letter-spacing:-.02
           <button class="btn p" id="genReport">Generate status report</button>
           <span class="conf" id="genState" style="margin-left:10px"></span>
         </div>
+      </section>
+    </div>
+
+    <!-- MEETINGS (the meeting twin) -->
+    <div class="view" id="view-meetings">
+      <section class="panel">
+        <div class="hd"><h2>Present everywhere</h2><span style="font-size:11.5px;color:var(--ink-3)" id="prsSub">While you work, the twin covers the rest</span></div>
+        <div class="bd">
+          <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+            <div><div class="n num" id="pMtg">—</div><div class="l">meetings covered</div></div>
+            <div><div class="n num" id="pDocs">—</div><div class="l">documents studied</div></div>
+            <div><div class="n num" id="pInbox">—</div><div class="l">inbox items open</div></div>
+            <div><div class="n num" id="pMem">—</div><div class="l">memory records</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cols" style="margin-top:16px">
+        <div class="panel">
+          <div class="hd"><h2>Meetings</h2>
+            <span style="display:flex;gap:6px;align-items:center">
+              <button class="btn" id="mtgStudy">Study my documents</button>
+              <button class="btn" id="mtgNew">Cover a meeting</button>
+            </span>
+          </div>
+          <div class="list" id="mtgSessions"><div class="empty">Loading…</div></div>
+        </div>
+        <div class="panel">
+          <div class="hd"><h2 id="mdTitle">Select a meeting</h2><span class="chip" id="mdStatus" style="display:none"></span></div>
+          <div class="bd" id="mdBody"><div class="empty">Pick a meeting on the left — prep it, feed it the transcript, ask what the twin would say, then brief.</div></div>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top:16px">
+        <div class="hd"><h2>Transcripts found on this machine</h2><span style="font-size:11.5px;color:var(--ink-3)">Teams saves .vtt files to OneDrive when transcription is on</span></div>
+        <div class="list" id="vttList"><div class="empty">Scanning…</div></div>
       </section>
     </div>
 
@@ -691,7 +743,7 @@ async function loadActivity(){
 }
 
 /* --- tab navigation ------------------------------------------------------- */
-var VIEWS=["today","inbox","decisions","activity","workspace"];
+var VIEWS=["today","inbox","decisions","activity","workspace","meetings"];
 var navBtns=document.querySelectorAll(".menu button");
 var curView="today";
 function showView(name){
@@ -704,6 +756,7 @@ function showView(name){
   if(name==="decisions") loadDecisions();
   if(name==="activity") loadActivityView();
   if(name==="workspace") loadWorkspace();
+  if(name==="meetings") loadMeetings();
 }
 navBtns.forEach(function(b,i){ b.addEventListener("click",function(){ showView(VIEWS[i]) }) });
 
@@ -964,6 +1017,161 @@ $("genReport").addEventListener("click",function(){
       if(res.created){ st.textContent="Saved: "+res.path; toast("Report ready in your Documents."); }
       else{ st.textContent=res.error||res.fix||"Word not available here."; }
     }).catch(function(){ btn.disabled=false; st.textContent="Connect the assistant to generate reports."; });
+});
+
+/* --- meetings view (the meeting twin) -------------------------------------- */
+var MTG={list:[],sel:null};
+var MSTATUS={scheduled:"",prep:"prepped",live:"risk",processing:"",briefed:"ok"};
+
+async function loadMeetings(){
+  loadPresence(); loadVtt();
+  try{
+    MTG.list=await fetch("/api/meetings").then(function(r){return r.json()})||[];
+    renderMtgList();
+    if(MTG.sel) renderMtgDetail();
+  }catch(e){ $("mtgSessions").innerHTML='<div class="empty">Connect the assistant to cover meetings.</div>'; }
+}
+async function loadPresence(){
+  try{
+    var p=await fetch("/api/presence").then(function(r){return r.json()});
+    $("pMtg").textContent=p.meetings?p.meetings.total:0;
+    $("pDocs").textContent=p.documentsStudied||0;
+    $("pInbox").textContent=p.inboxOpen||0;
+    $("pMem").textContent=(p.memory&&p.memory.nodes)||0;
+    $("prsSub").textContent=(p.meetings&&p.meetings.liveNow)?p.meetings.liveNow+" meeting(s) live now":"While you work, the twin covers the rest";
+  }catch(e){}
+}
+async function loadVtt(){
+  var box=$("vttList");
+  try{
+    var t=await fetch("/api/meetings/transcripts").then(function(r){return r.json()});
+    if(!(t.files||[]).length){ box.innerHTML='<div class="empty">None yet. In Teams, turn on transcription — the file appears here via OneDrive.</div>'; return; }
+    box.innerHTML="";
+    t.files.forEach(function(f){
+      var row=document.createElement("div"); row.className="li";
+      row.innerHTML='<span class="sev ok"></span><div class="bd"><div class="r1"><span class="ti"></span></div></div><div class="act"></div>';
+      row.querySelector(".ti").textContent=f.name;
+      var b=document.createElement("button"); b.className="btn p"; b.textContent="Cover it";
+      b.addEventListener("click",function(){
+        b.disabled=true; toast("Reading the transcript…",true);
+        fetch("/api/meetings/ingest-file",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({path:f.path})})
+          .then(function(r){return r.json()}).then(function(s){
+            $("toasts").innerHTML=""; toast("Transcript loaded — "+(s.transcript||[]).length+" utterances.");
+            MTG.sel=s.id; loadMeetings();
+          }).catch(function(){ $("toasts").innerHTML=""; toast("Couldn't read that file.",false,4000); b.disabled=false; });
+      });
+      row.querySelector(".act").appendChild(b);
+      box.appendChild(row);
+    });
+  }catch(e){ box.innerHTML='<div class="empty">Transcript scan unavailable.</div>'; }
+}
+function renderMtgList(){
+  var box=$("mtgSessions");
+  if(!MTG.list.length){ box.innerHTML='<div class="empty">No meetings yet — synced from your calendar, or cover one manually.</div>'; return; }
+  box.innerHTML="";
+  MTG.list.forEach(function(m){
+    var row=document.createElement("div"); row.className="li"+(MTG.sel===m.id?" sel":"");
+    row.style.cursor="pointer";
+    var sev=m.status==="briefed"?"ok":(m.status==="live"?"u":"c");
+    row.innerHTML='<span class="sev '+sev+'"></span><div class="bd"><div class="r1"><span class="ti"></span></div>'+
+      '<div class="tags"><span class="chip t">'+m.status+'</span>'+(m.isTeams?'<span class="chip">Teams</span>':'')+
+      (m.organizer?'<span class="chip">'+esc(m.organizer)+'</span>':'')+'</div></div>'+
+      '<span class="op">'+(m.start?hhmm(m.start):'')+'</span>';
+    row.querySelector(".ti").textContent=m.subject;
+    row.addEventListener("click",function(){ MTG.sel=m.id; renderMtgList(); renderMtgDetail(); });
+    box.appendChild(row);
+  });
+}
+function mtgAct(path,body,working,done){
+  toast(working,true,60000);
+  return fetch("/api/meetings/"+MTG.sel+path,{method:"POST",headers:{"content-type":"application/json"},body:body?JSON.stringify(body):"{}"})
+    .then(function(r){return r.json()}).then(function(res){
+      $("toasts").innerHTML="";
+      if(res.error){ toast(res.error,false,5000); return null; }
+      if(done) toast(done);
+      return res;
+    }).catch(function(){ $("toasts").innerHTML=""; toast("Request failed.",false,4000); return null; });
+}
+function renderMtgDetail(){
+  var m=null; MTG.list.forEach(function(x){ if(x.id===MTG.sel) m=x });
+  if(!m){ return; }
+  $("mdTitle").textContent=m.subject;
+  var st=$("mdStatus"); st.style.display="inline-block"; st.textContent=m.status;
+  var b=$("mdBody"); b.innerHTML="";
+
+  function lab(t){ var d=document.createElement("div"); d.className="mlab"; d.textContent=t; b.appendChild(d); }
+  function lines(arr){ var d=document.createElement("div"); d.className="mlist";
+    arr.forEach(function(x){ var r=document.createElement("div"); r.textContent=x; d.appendChild(r) }); b.appendChild(d); }
+
+  if(m.prep){
+    lab("Walks in knowing"); lines([m.prep.headline].concat(m.prep.lessons||[],(m.prep.stance||[])).slice(0,6));
+  }
+  if(m.minutes){
+    lab("Summary ("+m.minutes.method+")"); lines([m.minutes.summary]);
+    if((m.minutes.decisions||[]).length){ lab("Decisions"); lines(m.minutes.decisions); }
+    if((m.minutes.actions||[]).length){ lab("Actions"); lines(m.minutes.actions); }
+    if((m.minutes.questions||[]).length){ lab("Needs you"); lines(m.minutes.questions); }
+  }
+  if(m.briefing){
+    lab("Briefed"); lines([m.briefing.text].concat((m.briefing.delegatedTo||[]).map(function(d){return "Delegated: "+d})));
+  }
+
+  lab("Transcript · "+(m.transcript||[]).length+" utterances");
+  var ta=document.createElement("textarea"); ta.className="ta";
+  ta.placeholder="Paste the transcript — Teams .vtt content or plain “Name: what they said” lines.";
+  b.appendChild(ta);
+
+  var row=document.createElement("div"); row.className="mrow"; b.appendChild(row);
+  function btn(label,primary,fn){ var x=document.createElement("button"); x.className="btn"+(primary?" p":"");
+    x.textContent=label; x.addEventListener("click",fn); row.appendChild(x); return x; }
+
+  if(!m.prep) btn("Prep from memory",false,function(){
+    mtgAct("/prepare",null,"Reading organizational memory…","Prep pack ready.").then(function(){loadMeetings()}); });
+  btn("Add transcript",false,function(){
+    if(!ta.value.trim()){ toast("Paste the transcript first.",false,2500); return; }
+    fetch("/api/meetings/"+MTG.sel+"/transcript",{method:"POST",body:ta.value})
+      .then(function(r){return r.json()}).then(function(res){
+        if(res.error){ toast(res.error,false,4000); return; }
+        toast("Transcript in — "+(res.transcript||[]).length+" utterances."); loadMeetings();
+      }).catch(function(){ toast("Failed to ingest.",false,3000); }); });
+  if((m.transcript||[]).length&&!m.minutes) btn("Write the minutes",true,function(){
+    mtgAct("/finalize",null,"Writing the minutes…","Minutes ready.").then(function(){loadMeetings()}); });
+  if(m.minutes&&m.status!=="briefed") btn("Brief & store",true,function(){
+    mtgAct("/brief",null,"Storing knowledge, delegating actions…","Briefed — knowledge is in memory.").then(function(){loadMeetings()}); });
+
+  lab("Ask the twin — what would he say in this room?");
+  var askRow=document.createElement("div"); askRow.className="mrow"; b.appendChild(askRow);
+  var qi=document.createElement("input"); qi.className="ta"; qi.style.minHeight="0"; qi.style.flex="1";
+  qi.placeholder="e.g. “What's our position on the AxisPay penalty?”"; askRow.appendChild(qi);
+  var go=document.createElement("button"); go.className="btn p"; go.textContent="Ask"; askRow.appendChild(go);
+  var ansBox=document.createElement("div"); b.appendChild(ansBox);
+  function doAsk(){
+    if(!qi.value.trim()) return;
+    ansBox.innerHTML=""; toast("The twin is thinking…",true,60000);
+    fetch("/api/meetings/"+MTG.sel+"/ask",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({question:qi.value})})
+      .then(function(r){return r.json()}).then(function(a){
+        $("toasts").innerHTML="";
+        var d=document.createElement("div"); d.className="ans";
+        d.innerHTML='<div></div><div class="meta">'+(a.grounded?'Grounded — basis: '+(a.basis||[]).join(", "):'Not grounded — taken back to him')+' · '+esc(a.method||"")+'</div>';
+        d.firstChild.textContent=a.answer;
+        ansBox.appendChild(d); qi.value="";
+      }).catch(function(){ $("toasts").innerHTML=""; toast("Ask failed.",false,3000); });
+  }
+  go.addEventListener("click",doAsk);
+  qi.addEventListener("keydown",function(e){ if(e.key==="Enter") doAsk() });
+}
+$("mtgNew").addEventListener("click",function(){
+  var subj=prompt("Meeting subject to cover:"); if(!subj) return;
+  fetch("/api/meetings",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({subject:subj})})
+    .then(function(r){return r.json()}).then(function(s){ MTG.sel=s.id; loadMeetings(); toast("Covering “"+subj+"”."); });
+});
+$("mtgStudy").addEventListener("click",function(){
+  var btn=this; btn.disabled=true; toast("Studying your documents…",true,120000);
+  fetch("/api/study/scan?limit=30",{method:"POST"}).then(function(r){return r.json()}).then(function(rep){
+    $("toasts").innerHTML=""; btn.disabled=false;
+    toast("Studied "+rep.studied+" new document(s); "+rep.skipped+" skipped.",false,5000);
+    loadPresence();
+  }).catch(function(){ $("toasts").innerHTML=""; btn.disabled=false; toast("Study failed.",false,3000); });
 });
 
 /* --- boot ----------------------------------------------------------------- */

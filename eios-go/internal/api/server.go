@@ -20,6 +20,7 @@ import (
 	"eios/internal/governance"
 	"eios/internal/ingest"
 	"eios/internal/llm"
+	"eios/internal/memory"
 	"eios/internal/services"
 	"eios/internal/twin"
 )
@@ -31,13 +32,16 @@ type Server struct {
 	pulse  *twin.Pulse
 	llm    *llm.Provider
 	agent  *agent.Agent
+	memory *memory.Fabric
+	wisdom *wisdomEngine
 	limits governance.Limits
 	user   domain.User
 }
 
-func NewServer(cfg config.Config, store *data.Store, audit *governance.AuditLog, pulse *twin.Pulse, provider *llm.Provider, ag *agent.Agent) *Server {
+func NewServer(cfg config.Config, store *data.Store, audit *governance.AuditLog, pulse *twin.Pulse, provider *llm.Provider, ag *agent.Agent, mem *memory.Fabric) *Server {
 	return &Server{
 		cfg: cfg, store: store, audit: audit, pulse: pulse, llm: provider, agent: ag,
+		memory: mem, wisdom: newWisdom(),
 		limits: governance.Limits{AutonomousFinancialLimitInr: cfg.AutonomousFinancialLimitInr, AutonomousConfidence: cfg.AutonomousConfidence},
 		user:   data.DeputyChief(),
 	}
@@ -244,8 +248,8 @@ func (s *Server) Handler(static http.Handler) http.Handler {
 	// local laptop agent — his real apps, mailbox and documents
 	s.registerAgent(mux)
 
-	// memory + knowledge
-	s.registerMemoryStubs(mux)
+	// organizational memory + knowledge (real fabric: graph recall, egress gate)
+	s.registerMemory(mux)
 
 	// static UI (SPA) for everything else
 	mux.Handle("/", spaFallback(static))

@@ -17,6 +17,7 @@ import (
 	"eios/internal/data"
 	"eios/internal/governance"
 	"eios/internal/llm"
+	"eios/internal/memory"
 	"eios/internal/twin"
 )
 
@@ -63,7 +64,11 @@ func main() {
 	ag := agent.New()
 	ag.Watch(2 * time.Second)
 
-	srv := api.NewServer(cfg, store, audit, pulse, provider, ag)
+	// The memory fabric: provenance-traced organizational knowledge. Free recall
+	// from graph structure — no model call, cannot hallucinate.
+	mem := memory.Seed()
+
+	srv := api.NewServer(cfg, store, audit, pulse, provider, ag, mem)
 	handler := srv.Handler(staticHandler())
 
 	pulse.Start(4 * time.Second)

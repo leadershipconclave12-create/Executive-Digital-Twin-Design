@@ -82,7 +82,12 @@ func (s *Server) registerMeetings(mux *http.ServeMux) {
 			errJSON(w, 400, "ask a question")
 			return
 		}
-		writeJSON(w, 200, s.meetings.Answer(r.PathValue("id"), b.Question))
+		ans := s.meetings.Answer(r.PathValue("id"), b.Question)
+		// Everything the twin says in a room, in his voice, is on the record.
+		s.audit.Append("EIOS Twin", "meeting_twin", "meeting.answered", r.PathValue("id"),
+			"Q: "+b.Question+" | method="+ans.Method+" grounded="+strconv.FormatBool(ans.Grounded)+
+				" | A: "+ans.Answer)
+		writeJSON(w, 200, ans)
 	}))
 
 	mux.HandleFunc("POST /api/meetings/{id}/finalize", s.authed(func(w http.ResponseWriter, r *http.Request) {

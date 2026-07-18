@@ -229,13 +229,36 @@ func (e *Engine) Prepare(id string) (*Session, error) {
 	return s, nil
 }
 
-// Ingest appends transcript utterances and marks the session live.
+// Ingest appends transcript utterances and marks the session live. A re-ingest
+// of the same content (double click, the same .vtt twice) is detected and only
+// the novel utterances are kept — minutes must not double-count a decision.
 func (e *Engine) Ingest(id string, utts []Utterance) (*Session, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	s, ok := e.byID[id]
 	if !ok {
 		return nil, fmt.Errorf("no session %s", id)
+	}
+	seen := map[string]bool{}
+	for _, u := range s.Transcript {
+		seen[u.Speaker+"|"+u.Text] = true
+	}
+	dup := 0
+	for _, u := range utts {
+		if seen[u.Speaker+"|"+u.Text] {
+			dup++
+		}
+	}
+	// Mostly-duplicate batch → this is a re-ingest; keep only what's new.
+	// (A genuine repeat of a short phrase in a fresh batch is untouched.)
+	if len(utts) >= 3 && dup*2 > len(utts) {
+		var novel []Utterance
+		for _, u := range utts {
+			if !seen[u.Speaker+"|"+u.Text] {
+				novel = append(novel, u)
+			}
+		}
+		utts = novel
 	}
 	s.Transcript = append(s.Transcript, utts...)
 	if s.Status == "scheduled" || s.Status == "prep" {
@@ -347,7 +370,10 @@ func (e *Engine) minutesByModel(subject string, ts []Utterance) *Minutes {
 	sys := "You minute executive meetings for an Indian payments organization. From the transcript, extract:\n" +
 		"SUMMARY: <=3 sentences.\nDECISIONS: each on a line starting 'D: '\nACTIONS: each 'A: <owner>: <action>'\n" +
 		"RISKS: each 'R: '\nQUESTIONS (unresolved, need the Deputy Chief): each 'Q: '\n" +
-		"Only what was actually said. No invention."
+		"Only what was actually said. No invention. " +
+		"If a statement is later retracted or reversed ('scratch that', 'actually no', changed position), " +
+		"record ONLY the final position and note it was revised. " +
+		"Treat jokes, sarcasm and rhetorical questions as colour, not decisions."
 	out, _, err := e.llm.Complete(e.llm.ModelFor("brief"), "meeting-minutes",
 		[]llm.Message{{Role: "system", Content: sys},
 			{Role: "user", Content: "Meeting: " + subject + "\n\n" + b.String()}}, 0.1, 900)
@@ -384,9 +410,21 @@ func minutesByRules(subject string, ts []Utterance) *Minutes {
 	decideWords := []string{"we've decided", "we decided", "agreed to", "we agree", "approved", "sign off", "signed off", "go ahead with"}
 	actionWords := []string{"will ", "i'll ", "we'll ", "by friday", "by monday", "by tomorrow", "next week", "action:", "take this away", "follow up"}
 	riskWords := []string{"risk", "concern", "worried", "blocker", "blocked", "slip", "delay", "breach", "exposure"}
+	retractWords := []string{"scratch that", "forget that", "forget what i said", "actually no", "actually, no", "let's not", "cancel that", "reversing that", "take that back", "on second thought"}
 	for _, u := range ts {
 		low := strings.ToLower(u.Text)
 		line := u.Speaker + ": " + u.Text
+		// A retraction voids the most recent decision/action rather than being
+		// filed alongside it — the meeting's LAST position is the position.
+		if containsAny(low, retractWords) {
+			switch {
+			case len(m.Decisions) > 0:
+				m.Decisions = m.Decisions[:len(m.Decisions)-1]
+			case len(m.Actions) > 0:
+				m.Actions = m.Actions[:len(m.Actions)-1]
+			}
+			continue
+		}
 		switch {
 		case containsAny(low, decideWords):
 			m.Decisions = append(m.Decisions, line)
@@ -429,11 +467,17 @@ func (e *Engine) Brief(id string) (*Session, error) {
 	}
 	var ids []string
 
+	// What was said decides how the record is stored. A meeting that touched
+	// people-matters, comp, legal or commercial terms is RESTRICTED: he reads
+	// it here; it never enters a prompt. Sensitivity is inherited by every
+	// node this meeting produces — decisions included.
+	sensitivity, sensWhy := classifySensitivity(sess)
+
 	epID := "MEP-" + sess.ID
 	e.fabric.Add(memory.Node{
 		ID: epID, Kind: "episode", Title: "Meeting: " + sess.Subject, At: sess.Start,
 		Summary: sess.Minutes.Summary, Tags: words(sess.Subject),
-		Provenance: prov, Sensitivity: memory.Open, Layer: "organizational", Lifecycle: "active",
+		Provenance: prov, Sensitivity: sensitivity, Layer: "organizational", Lifecycle: "active",
 		Confidence: memory.ConfidenceDetail{Evidence: 0.8, Reasoning: 0.7, Policy: 1, Freshness: 1,
 			HumanValidation: "unvalidated", Overall: conf, LimitedBy: "validation",
 			Explanation: "Derived from a meeting transcript; he has not yet confirmed it."},
@@ -446,7 +490,7 @@ func (e *Engine) Brief(id string) (*Session, error) {
 		e.fabric.Add(memory.Node{
 			ID: did, Kind: "decision", Title: "In-meeting: " + trim(d, 90), At: sess.Start,
 			Summary: d, Tags: words(sess.Subject), Provenance: prov,
-			Sensitivity: memory.Open, Layer: "organizational", Lifecycle: "active",
+			Sensitivity: sensitivity, Layer: "organizational", Lifecycle: "active",
 			Confidence: memory.ConfidenceDetail{Evidence: 0.8, Reasoning: 0.7, Policy: 1, Freshness: 1,
 				HumanValidation: "unvalidated", Overall: conf, LimitedBy: "validation",
 				Explanation: "Stated in the meeting; awaiting his confirmation."},
@@ -461,12 +505,53 @@ func (e *Engine) Brief(id string) (*Session, error) {
 	if n := len(sess.Minutes.Questions); n > 0 {
 		fmt.Fprintf(&text, " %d question(s) genuinely need you.", n)
 	}
+	if sensitivity != memory.Open {
+		fmt.Fprintf(&text, " Stored RESTRICTED (%s): you can read it; it will never be placed in a prompt.", sensWhy)
+	}
 
 	e.mu.Lock()
 	s.Briefing = &Briefing{Text: text.String(), MemoryIDs: ids, At: now}
 	s.Status = "briefed"
 	e.mu.Unlock()
 	return s, nil
+}
+
+// sensitiveTerms: what makes a meeting's record Restricted. Deliberately broad —
+// over-restricting costs a little utility; under-restricting leaks a person's
+// appraisal into a prompt. Only ever tightens, never loosens.
+var sensitiveTerms = []string{
+	// people matters
+	"salary", "compensation", "increment", "bonus", "appraisal", "performance review",
+	"performance improvement", "pip", "resign", "resignation", "termination", "terminate",
+	"fired", "layoff", "let go", "medical", "health issue", "personal issue", "grievance",
+	// legal / regulatory exposure
+	"legal", "lawyer", "counsel", "litigation", "lawsuit", "privileged", "settlement",
+	"show cause", "penalty notice",
+	// commercial terms
+	"pricing", "discount", "commercial terms", "negotiat", "confidential", "off the record",
+}
+
+// classifySensitivity inspects everything the meeting produced and said.
+func classifySensitivity(sess Session) (string, string) {
+	var b strings.Builder
+	if sess.Minutes != nil {
+		b.WriteString(strings.ToLower(sess.Minutes.Summary) + "\n")
+		for _, g := range [][]string{sess.Minutes.Decisions, sess.Minutes.Actions, sess.Minutes.Risks, sess.Minutes.Questions} {
+			for _, x := range g {
+				b.WriteString(strings.ToLower(x) + "\n")
+			}
+		}
+	}
+	for _, u := range sess.Transcript {
+		b.WriteString(strings.ToLower(u.Text) + "\n")
+	}
+	text := b.String()
+	for _, t := range sensitiveTerms {
+		if strings.Contains(text, t) {
+			return memory.Restricted, "the discussion touched '" + t + "'"
+		}
+	}
+	return memory.Open, ""
 }
 
 // --- helpers ---------------------------------------------------------------

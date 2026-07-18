@@ -147,6 +147,84 @@ func TestAnswerFromMemory(t *testing.T) {
 	}
 }
 
+// Case 26: the same transcript ingested twice must not double the record.
+func TestReIngestIsDeduplicated(t *testing.T) {
+	e := NewEngine(memory.Seed(), nil)
+	s := e.Create("Dedup check", "", "")
+	utts := ParseTranscript(sampleVTT)
+	if _, err := e.Ingest(s.ID, utts); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.Ingest(s.ID, utts); err != nil {
+		t.Fatal(err)
+	}
+	got, _ := e.Get(s.ID)
+	if len(got.Transcript) != len(utts) {
+		t.Fatalf("re-ingest doubled the transcript: %d vs %d", len(got.Transcript), len(utts))
+	}
+}
+
+// Cases 32/36: "scratch that" voids the decision it follows.
+func TestRetractionVoidsDecision(t *testing.T) {
+	m := minutesByRules("Retraction", []Utterance{
+		{Speaker: "Ravi", Text: "Agreed to extend the AxisPay contract."},
+		{Speaker: "Ravi", Text: "Actually no, scratch that until the penalty is settled."},
+		{Speaker: "Priya", Text: "Agreed to issue the penalty notice first."},
+	})
+	if len(m.Decisions) != 1 {
+		t.Fatalf("expected the retracted decision removed, got %v", m.Decisions)
+	}
+	if !strings.Contains(m.Decisions[0], "penalty notice") {
+		t.Errorf("the surviving decision should be the final position: %v", m.Decisions)
+	}
+}
+
+// Cases 73–78: a meeting that touched comp/legal/pricing is stored Restricted —
+// he reads it; the egress gate keeps it out of every prompt.
+func TestSensitiveMeetingIsRestricted(t *testing.T) {
+	f := memory.Seed()
+	e := NewEngine(f, nil)
+	s := e.Create("Team discussion", "", "")
+	_, _ = e.Ingest(s.ID, []Utterance{
+		{Speaker: "Ravi", Text: "Agreed to revise the salary bands for the platform team."},
+		{Speaker: "Priya", Text: "I'll prepare the increment sheet by Friday."},
+	})
+	if _, err := e.Finalize(s.ID); err != nil {
+		t.Fatal(err)
+	}
+	briefed, err := e.Brief(s.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range briefed.Briefing.MemoryIDs {
+		n, ok := f.Get(id, memory.HumanAccess)
+		if !ok {
+			t.Fatalf("node %s missing", id)
+		}
+		if n.Sensitivity != memory.Restricted {
+			t.Errorf("%s: a salary discussion must be Restricted, got %q", id, n.Sensitivity)
+		}
+		if _, visible := f.Get(id, memory.LLMAccess); visible {
+			t.Errorf("%s must be invisible to LLMAccess", id)
+		}
+	}
+	if !strings.Contains(briefed.Briefing.Text, "RESTRICTED") {
+		t.Error("the briefing must tell him the record was restricted")
+	}
+	// A clean commercial meeting stays Open.
+	s2 := e.Create("Release 18 readiness", "", "")
+	_, _ = e.Ingest(s2.ID, []Utterance{
+		{Speaker: "Ravi", Text: "Agreed to move the release gate to Thursday."},
+		{Speaker: "Dev", Text: "I'll update the runbook by tomorrow."},
+	})
+	_, _ = e.Finalize(s2.ID)
+	b2, _ := e.Brief(s2.ID)
+	n, _ := f.Get(b2.Briefing.MemoryIDs[0], memory.HumanAccess)
+	if n.Sensitivity != memory.Open {
+		t.Errorf("an ordinary release meeting should stay Open, got %q", n.Sensitivity)
+	}
+}
+
 func TestFinalizeWithoutTranscript(t *testing.T) {
 	e := NewEngine(memory.Seed(), nil)
 	s := e.Create("Empty", "", "")

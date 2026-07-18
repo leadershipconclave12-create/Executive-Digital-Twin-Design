@@ -186,6 +186,77 @@ h1{margin:0;font-size:clamp(21px,2.4vw,27px);font-weight:650;letter-spacing:-.02
 @keyframes rise{from{opacity:0;transform:translateY(8px)}}
 .foot{margin-top:18px;text-align:center;font-size:11.5px;color:var(--ink-3)}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* ---- views (tab switching) ---------------------------------------------- */
+.view{display:none;animation:fade .22s var(--e)}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}}
+
+/* ---- list rows (inbox / decisions) -------------------------------------- */
+.list{display:flex;flex-direction:column}
+.li{display:flex;gap:12px;align-items:flex-start;padding:13px 4px;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li .sev{width:3px;align-self:stretch;border-radius:2px;flex:none;background:var(--line-2)}
+.li .sev.u{background:#D64545}.li .sev.c{background:#D99A2B}.li .sev.ok{background:#3BA776}
+.li .bd{flex:1;min-width:0}
+.li .r1{display:flex;align-items:baseline;gap:8px}
+.li .ti{font-size:14px;font-weight:600;color:var(--ink)}
+.li .frm{font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .d{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.5}
+.li .tags{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:10.5px;font-weight:600;letter-spacing:.02em;padding:2px 8px;border-radius:999px;background:#F0F2F5;color:var(--ink-2);text-transform:uppercase}
+.chip.t{background:#EAF1FB;color:#1A5FB4}.chip.risk{background:#FBEDEA;color:#B54233}.chip.ok{background:#E9F6F0;color:#1F7A55}
+.li .act{display:flex;gap:6px;align-items:center;flex:none}
+.btn{border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-size:12px;font-weight:600;
+  padding:6px 11px;border-radius:8px;cursor:pointer;transition:.15s var(--e);font-family:inherit}
+.btn:hover{background:var(--surface-2);border-color:var(--ink-3)}
+.btn.p{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.p:hover{background:#242A33}
+.btn:disabled{opacity:.45;cursor:default}
+.amt{font-family:var(--fn);font-variant-numeric:tabular-nums;font-weight:650;color:var(--ink);font-size:13px}
+.conf{font-size:11px;color:var(--ink-3)}
+
+/* ---- activity view ------------------------------------------------------ */
+.now{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface-2)}
+.now .lv{width:8px;height:8px;border-radius:50%;background:#3BA776;box-shadow:0 0 0 3px rgba(59,167,118,.18)}
+.bars{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+.barrow{display:grid;grid-template-columns:96px 1fr 60px;align-items:center;gap:10px;font-size:12.5px}
+.barrow .nm{font-weight:570;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.barrow .tr{height:7px;border-radius:4px;background:#EEF0F3;overflow:hidden}
+.barrow .fl{height:100%;border-radius:4px;background:var(--ink);opacity:.72}
+.barrow .vv{text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.aud{margin-top:4px;font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:2px}
+.aud .e{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.aud .e:last-child{border-bottom:0}
+.aud .tm{color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.aud .ac{font-weight:600;color:var(--ink)}
+
+/* ---- workspace ---------------------------------------------------------- */
+.dayline{font-size:14px;font-weight:570;color:var(--ink);line-height:1.5}
+.focus{margin-top:11px;padding:12px 14px;border:1px solid #CBE3D6;background:#F1F9F5;border-radius:var(--r-sm);
+  display:flex;align-items:center;gap:11px}
+.focus .ic{width:30px;height:30px;border-radius:8px;background:#DCF0E6;display:grid;place-items:center;flex:none;color:#1F7A55;font-weight:700;font-size:12px}
+.focus .m{font-size:13px;color:var(--ink)}
+.focus .m b{color:#1F7A55}
+.warn{margin-top:11px;padding:10px 13px;border:1px solid #F0D9C7;background:#FCF3EC;border-radius:var(--r-sm);
+  font-size:12.5px;color:#8A4B22;display:flex;gap:8px}
+.warn .w{display:block;margin-bottom:2px}
+.presence{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--ink-2);
+  padding:3px 10px;border-radius:999px;background:#F0F2F5}
+.presence .dot{width:8px;height:8px;border-radius:50%;background:#C9CDD4}
+.presence.on .dot{background:#3BA776}.presence.busy .dot{background:#D64545}
+.presence.mtg .dot{background:#D99A2B}.presence.away .dot{background:#D99A2B;opacity:.6}
+.note{margin-top:11px;font-size:11.5px;color:var(--ink-3);line-height:1.5;border-top:1px solid var(--line);padding-top:9px}
+.clip{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface-2);
+  font-size:12.5px;color:var(--ink-2);font-family:var(--fn);white-space:pre-wrap;word-break:break-word;max-height:96px;overflow:auto}
+.clip .k{font-family:var(--f);font-weight:600;color:var(--ink-3);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:5px}
+.roots{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.root{border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 12px;background:var(--surface);min-width:150px}
+.root .rn{font-size:12.5px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px}
+.root .rm{font-size:11px;color:var(--ink-3);margin-top:2px}
+.root .kd{width:7px;height:7px;border-radius:2px;background:#0364B8;flex:none}
+.root .kd.sp{background:#2E7D32}
+.li .op{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 
 <div class="wrap">
@@ -204,6 +275,7 @@ h1{margin:0;font-size:clamp(21px,2.4vw,27px);font-weight:650;letter-spacing:-.02
       <button><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>Inbox</button>
       <button><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h9"/></svg>Decisions</button>
       <button><svg viewBox="0 0 24 24"><path d="M7 10h10M7 14h6"/><rect x="3" y="4" width="18" height="16" rx="3"/></svg>Activity</button>
+      <button><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg>Workspace</button>
     </nav>
     <div class="grow"></div>
     <div class="who">
@@ -224,6 +296,7 @@ h1{margin:0;font-size:clamp(21px,2.4vw,27px);font-weight:650;letter-spacing:-.02
       </div>
     </header>
 
+    <div class="view on" id="view-today">
     <section class="cols">
       <!-- graph -->
       <div class="panel">
@@ -277,6 +350,88 @@ h1{margin:0;font-size:clamp(21px,2.4vw,27px);font-weight:650;letter-spacing:-.02
       <div class="hd"><h2>Hand it over</h2><span style="font-size:11.5px;color:var(--ink-3)">One tap</span></div>
       <div class="tasks" id="tasks"></div>
     </section>
+    </div><!-- /view-today -->
+
+    <!-- INBOX -->
+    <div class="view" id="view-inbox">
+      <section class="panel">
+        <div class="hd"><h2>Inbox</h2><span style="font-size:11.5px;color:var(--ink-3)" id="inboxCount">—</span></div>
+        <div class="list" id="inboxList"><div class="empty">Loading…</div></div>
+      </section>
+    </div>
+
+    <!-- DECISIONS -->
+    <div class="view" id="view-decisions">
+      <section class="panel">
+        <div class="hd"><h2>Decisions</h2><span style="font-size:11.5px;color:var(--ink-3)" id="decCount">—</span></div>
+        <div class="list" id="decList"><div class="empty">Loading…</div></div>
+      </section>
+    </div>
+
+    <!-- ACTIVITY -->
+    <div class="view" id="view-activity">
+      <section class="panel">
+        <div class="hd"><h2>Right now</h2><span style="font-size:11.5px;color:var(--ink-3)">Live from your desktop</span></div>
+        <div class="now" id="actNow"><span class="lv"></span><span>Watching for your active app…</span></div>
+        <div class="hd" style="margin-top:18px"><h2>Time today</h2><span style="font-size:11.5px;color:var(--ink-3)">By application</span></div>
+        <div class="bars" id="actBars"><div class="empty">No activity recorded yet.</div></div>
+        <div class="hd" style="margin-top:18px"><h2>What it did</h2><span style="font-size:11.5px;color:var(--ink-3)">Audit trail</span></div>
+        <div class="aud" id="actAudit"><div class="empty">Loading…</div></div>
+      </section>
+    </div>
+
+    <!-- WORKSPACE (Lane A local integrations) -->
+    <div class="view" id="view-workspace">
+      <section class="cols">
+        <!-- your day -->
+        <div class="panel">
+          <div class="hd"><h2>Your day</h2><span style="font-size:11.5px;color:var(--ink-3)" id="calSrc">Outlook calendar</span></div>
+          <div class="bd">
+            <div class="dayline" id="dayHead">Reading your calendar…</div>
+            <div class="focus" id="focusCard" style="display:none"></div>
+            <div id="conflicts"></div>
+            <div class="list" id="mtgList"></div>
+          </div>
+        </div>
+        <!-- teams -->
+        <div class="panel">
+          <div class="hd"><h2>Teams</h2><span class="presence" id="tmPill"><span class="dot"></span>—</span></div>
+          <div class="bd">
+            <div class="sub-n" id="tmBasis">Checking presence…</div>
+            <div class="list" id="tmMtgs"></div>
+            <div class="note" id="tmNote"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- right now / context -->
+      <section class="panel" style="margin-top:16px">
+        <div class="hd"><h2>Working on</h2><span style="font-size:11.5px;color:var(--ink-3)">Screen &amp; clipboard</span></div>
+        <div class="bd">
+          <div class="dayline" id="ctxInfer">Reading your screen…</div>
+          <div class="clip" id="ctxClip" style="display:none"></div>
+        </div>
+      </section>
+
+      <!-- synced files -->
+      <section class="panel" style="margin-top:16px">
+        <div class="hd"><h2>Synced files</h2><span style="font-size:11.5px;color:var(--ink-3)" id="odSrc">OneDrive · SharePoint</span></div>
+        <div class="bd">
+          <div class="roots" id="odRoots"></div>
+          <div class="list" id="odRecent"><div class="empty">Loading…</div></div>
+        </div>
+      </section>
+
+      <!-- generate -->
+      <section class="panel" style="margin-top:16px">
+        <div class="hd"><h2>Generate</h2><span style="font-size:11.5px;color:var(--ink-3)">Word · saved to Documents</span></div>
+        <div class="bd">
+          <p class="sub-n" style="margin-bottom:10px">Turn today into a report you can send — drafted from your live calendar and inbox.</p>
+          <button class="btn p" id="genReport">Generate status report</button>
+          <span class="conf" id="genState" style="margin-left:10px"></span>
+        </div>
+      </section>
+    </div>
 
     <div class="ask">
       <svg class="q" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
@@ -534,6 +689,282 @@ async function loadActivity(){
     if(!demoTimer) demoTimer=setInterval(function(){ if(!paused) setActive((active+1)%APPS.length) }, 3800);
   }
 }
+
+/* --- tab navigation ------------------------------------------------------- */
+var VIEWS=["today","inbox","decisions","activity","workspace"];
+var navBtns=document.querySelectorAll(".menu button");
+var curView="today";
+function showView(name){
+  curView=name;
+  VIEWS.forEach(function(v){ var el=$("view-"+v); if(el) el.classList.toggle("on", v===name) });
+  navBtns.forEach(function(b,i){
+    if(VIEWS[i]===name) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
+  });
+  if(name==="inbox") loadInbox();
+  if(name==="decisions") loadDecisions();
+  if(name==="activity") loadActivityView();
+  if(name==="workspace") loadWorkspace();
+}
+navBtns.forEach(function(b,i){ b.addEventListener("click",function(){ showView(VIEWS[i]) }) });
+
+/* --- inbox view ----------------------------------------------------------- */
+function catOf(s){ return (s.category||s.type||"signal") }
+async function loadInbox(){
+  var box=$("inboxList");
+  try{
+    var ctl=new AbortController(); setTimeout(function(){ctl.abort()},2500);
+    var sig=await fetch("/api/signals",{signal:ctl.signal}).then(function(r){return r.json()});
+    sig=sig||[];
+    if(!sig.length){ box.innerHTML='<div class="empty">Inbox is clear.</div>'; $("inboxCount").textContent="0"; return }
+    box.innerHTML="";
+    sig.forEach(function(s){
+      var handled=!!s.handled, urgent=(s.priority==="urgent"||s.severity==="high");
+      var row=document.createElement("div"); row.className="li";
+      row.innerHTML='<span class="sev '+(handled?"ok":(urgent?"u":"c"))+'"></span>'+
+        '<div class="bd"><div class="r1"><span class="ti"></span><span class="frm"></span></div>'+
+        '<div class="d"></div><div class="tags"><span class="chip t"></span>'+(handled?'<span class="chip ok">handled</span>':'')+'</div></div>'+
+        '<div class="act"></div>';
+      row.querySelector(".ti").textContent=s.subject||s.title||"(no subject)";
+      row.querySelector(".frm").textContent=s.from?("· "+s.from):"";
+      row.querySelector(".d").textContent=s.summary||s.recommendedAction||s.preview||"";
+      row.querySelector(".chip.t").textContent=catOf(s);
+      if(s.id){
+        var dr=document.createElement("button"); dr.className="btn"; dr.textContent="Draft reply";
+        dr.addEventListener("click",function(){
+          dr.disabled=true; toast("Drafting a reply in Outlook…",true);
+          var body={replyTo:s.entryId||"",to:s.address||"",subject:s.subject||"",
+            body:"Thanks for the note — I've reviewed this. "};
+          fetch("/api/local/mail/draft",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)})
+            .then(function(r){return r.json()}).then(function(res){
+              $("toasts").innerHTML="";
+              toast(res.created?"Draft saved to Outlook Drafts — review and send when ready.":(res.fix||res.error||"Couldn't reach Outlook here."),false,5000);
+              dr.disabled=false;
+            }).catch(function(){ $("toasts").innerHTML=""; toast("Connect the assistant to draft replies.",false,4000); dr.disabled=false; });
+        });
+        row.querySelector(".act").appendChild(dr);
+      }
+      if(!handled && s.id){
+        var b=document.createElement("button"); b.className="btn p"; b.textContent="Handle";
+        b.addEventListener("click",function(){
+          b.disabled=true; row.style.opacity=".5"; toast("Handled — filed and logged.");
+          if(live) fetch("/api/signals/"+s.id+"/handle",{method:"POST"}).catch(function(){});
+        });
+        row.querySelector(".act").appendChild(b);
+      }
+      box.appendChild(row);
+    });
+    $("inboxCount").textContent=sig.length+" message"+(sig.length===1?"":"s");
+  }catch(e){
+    box.innerHTML='<div class="empty">Connect the assistant to load your inbox.</div>';
+    $("inboxCount").textContent="—";
+  }
+}
+
+/* --- decisions view ------------------------------------------------------- */
+async function loadDecisions(){
+  var box=$("decList");
+  try{
+    var ctl=new AbortController(); setTimeout(function(){ctl.abort()},2500);
+    var dec=await fetch("/api/decisions",{signal:ctl.signal}).then(function(r){return r.json()});
+    dec=dec||[];
+    if(!dec.length){ box.innerHTML='<div class="empty">No decisions pending.</div>'; $("decCount").textContent="0"; return }
+    box.innerHTML="";
+    var pending=0;
+    dec.forEach(function(d){
+      var open=(d.status==="pending"); if(open) pending++;
+      var hi=(d.risk==="High");
+      var row=document.createElement("div"); row.className="li";
+      row.innerHTML='<span class="sev '+(open?(hi?"u":"c"):"ok")+'"></span>'+
+        '<div class="bd"><div class="r1"><span class="ti"></span><span class="amt"></span></div>'+
+        '<div class="d"></div>'+
+        '<div class="tags"><span class="chip t"></span>'+(d.risk?'<span class="chip risk">'+d.risk+' risk</span>':'')+
+        (open?'':'<span class="chip ok">'+(d.status||"resolved")+'</span>')+
+        '<span class="chip">'+d.id+'</span></div>'+
+        (d.confidence?'<div class="conf" style="margin-top:5px">Assistant confidence '+Math.round(d.confidence*100)+'% · '+(d.recommendation||"")+'</div>':'')+
+        '</div><div class="act"></div>';
+      row.querySelector(".ti").textContent=d.type||"Decision";
+      row.querySelector(".amt").textContent=d.amountLabel||"";
+      row.querySelector(".d").textContent=d.summary||"";
+      row.querySelector(".chip.t").textContent=d.tier||d.domain||"decision";
+      if(open){
+        var act=row.querySelector(".act");
+        var hold=document.createElement("button"); hold.className="btn"; hold.textContent="Hold";
+        var ap=document.createElement("button"); ap.className="btn p"; ap.textContent="Approve";
+        ap.addEventListener("click",function(){
+          ap.disabled=true; hold.disabled=true; row.style.opacity=".55"; toast("Approved "+d.id+" — logged to the decision journal.");
+          if(live) fetch("/api/decisions/"+d.id+"/resolve",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({decision:"approved"})}).then(function(){loadDecisions()}).catch(function(){});
+        });
+        hold.addEventListener("click",function(){ hold.disabled=true; toast("Held — it'll wait for you."); });
+        act.appendChild(hold); act.appendChild(ap);
+      }
+      box.appendChild(row);
+    });
+    $("decCount").textContent=pending?(pending+" awaiting you"):"all clear";
+  }catch(e){
+    box.innerHTML='<div class="empty">Connect the assistant to load decisions.</div>';
+    $("decCount").textContent="—";
+  }
+}
+
+/* --- activity view (full) ------------------------------------------------- */
+async function loadActivityView(){
+  try{
+    var ctl=new AbortController(); setTimeout(function(){ctl.abort()},2500);
+    var a=await fetch("/api/activity",{signal:ctl.signal}).then(function(r){return r.json()});
+    var now=$("actNow");
+    if(a && a.supported && a.watching){
+      now.innerHTML='<span class="lv"></span><span>On screen now: <b>'+(a.activeApp||"—")+'</b>'+
+        (a.activeTitle?' — '+a.activeTitle.replace(/</g,"&lt;"):'')+'</span>';
+    }else{
+      now.innerHTML='<span class="lv" style="background:#C9CDD4;box-shadow:none"></span><span>Desktop watch is not active in this environment.</span>';
+    }
+    var bars=$("actBars"); var today=(a&&a.today)||[];
+    if(today.length){
+      var max=1; today.forEach(function(u){ if(u.seconds>max) max=u.seconds });
+      today.sort(function(x,y){return y.seconds-x.seconds});
+      bars.innerHTML="";
+      today.forEach(function(u){
+        var r=document.createElement("div"); r.className="barrow";
+        r.innerHTML='<span class="nm"></span><div class="tr"><div class="fl" style="width:'+Math.max(4,Math.round(u.seconds/max*100))+'%"></div></div><span class="vv">'+fmtDur(u.seconds)+'</span>';
+        r.querySelector(".nm").textContent=u.name||u.key;
+        bars.appendChild(r);
+      });
+    }else{ bars.innerHTML='<div class="empty">No activity recorded yet — open an app and it appears here.</div>'; }
+  }catch(e){
+    $("actNow").innerHTML='<span class="lv" style="background:#C9CDD4;box-shadow:none"></span><span>Connect the assistant to see live activity.</span>';
+  }
+  // audit trail — what the assistant actually did
+  try{
+    var aud=await fetch("/api/audit?limit=12").then(function(r){return r.json()});
+    var box=$("actAudit"); var ev=(aud&&aud.events)||[];
+    if(!ev.length){ box.innerHTML='<div class="empty">No actions logged yet.</div>'; return }
+    box.innerHTML="";
+    ev.slice().reverse().forEach(function(e){
+      var t=(e.timestamp||"").replace("T"," ").replace("Z","").slice(5,16);
+      var row=document.createElement("div"); row.className="e";
+      row.innerHTML='<span class="tm">'+t+'</span><span><span class="ac"></span> — <span></span></span>';
+      row.querySelectorAll("span")[2].textContent=(e.action||"").replace(/[._]/g," ");
+      row.querySelectorAll("span")[3].textContent=e.detail||e.resource||"";
+      box.appendChild(row);
+    });
+  }catch(e){ $("actAudit").innerHTML='<div class="empty">Audit trail unavailable.</div>'; }
+}
+
+/* --- workspace view (Lane A local integrations) --------------------------- */
+function esc(s){ return (s||"").replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]}) }
+function hhmm(iso){ try{ return new Date(iso).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) }catch(e){ return "" } }
+
+async function loadWorkspace(){ loadCalendar(); loadTeams(); loadContext(); loadOneDrive(); }
+
+async function loadCalendar(){
+  var head=$("dayHead"), fc=$("focusCard"), cf=$("conflicts"), list=$("mtgList");
+  try{
+    var d=await fetch("/api/local/calendar").then(function(r){return r.json()});
+    if(!d.available){
+      head.textContent=d.error||"Calendar isn't readable here.";
+      $("calSrc").textContent=d.reason||"unavailable";
+      fc.style.display="none"; cf.innerHTML=""; list.innerHTML='<div class="empty">'+esc(d.fix||"")+'</div>'; return;
+    }
+    head.textContent=d.headline||"";
+    if(d.focusProposal){
+      fc.style.display="flex";
+      fc.innerHTML='<span class="ic">◗</span><div class="m">Protect <b>'+d.focusProposal.start+'–'+d.focusProposal.end+'</b> for deep work — your longest clear stretch ('+d.focusProposal.minutes+' min).</div>';
+    } else fc.style.display="none";
+    cf.innerHTML="";
+    (d.conflicts||[]).forEach(function(c){
+      var el=document.createElement("div"); el.className="warn";
+      el.innerHTML='<span>⚠</span><div><b class="w">Clash — '+c.overlapMinutes+' min overlap</b>“'+esc(c.a)+'” and “'+esc(c.b)+'” collide. One has to move.</div>';
+      cf.appendChild(el);
+    });
+    list.innerHTML="";
+    if(!(d.events||[]).length){ list.innerHTML='<div class="empty">Nothing on the calendar today.</div>'; return; }
+    d.events.forEach(function(ev){
+      var row=document.createElement("div"); row.className="li";
+      var sev=ev.busy===2?"c":(ev.busy===3?"u":"ok");
+      row.innerHTML='<span class="sev '+sev+'"></span><div class="bd"><div class="r1"><span class="ti"></span></div>'+
+        '<div class="tags">'+(ev.isTeams?'<span class="chip t">Teams</span>':'')+
+        (ev.organizer?'<span class="chip">'+esc(ev.organizer)+'</span>':'')+
+        (ev.busyLabel?'<span class="chip">'+ev.busyLabel+'</span>':'')+'</div></div>'+
+        '<span class="op">'+hhmm(ev.start)+(ev.end?'–'+hhmm(ev.end):'')+'</span>';
+      row.querySelector(".ti").textContent=ev.subject||"(untitled)";
+      list.appendChild(row);
+    });
+  }catch(e){ head.textContent="Connect the assistant to read your calendar."; list.innerHTML=""; }
+}
+
+async function loadTeams(){
+  var pill=$("tmPill"), basis=$("tmBasis"), mtgs=$("tmMtgs"), note=$("tmNote");
+  try{
+    var t=await fetch("/api/local/teams").then(function(r){return r.json()});
+    pill.className="presence "+(t.inMeeting?"mtg":(t.status==="Available"?"on":(t.status==="Away"?"away":"")));
+    pill.innerHTML='<span class="dot"></span>'+esc(t.status||"—");
+    basis.textContent=t.basis?("Because "+t.basis+"."):"";
+    mtgs.innerHTML="";
+    if(!(t.meetings||[]).length){ mtgs.innerHTML='<div class="empty">No Teams meetings on today.</div>'; }
+    (t.meetings||[]).forEach(function(m){
+      var row=document.createElement("div"); row.className="li";
+      row.innerHTML='<span class="sev '+(m.live?"c":"ok")+'"></span><div class="bd"><div class="r1"><span class="ti"></span></div>'+
+        (m.live?'<div class="tags"><span class="chip risk">Live now</span></div>':'')+'</div>'+
+        '<span class="op">'+hhmm(m.start)+'</span>';
+      row.querySelector(".ti").textContent=m.subject||"(untitled)";
+      mtgs.appendChild(row);
+    });
+    note.textContent=t.note||"";
+  }catch(e){ basis.textContent="Connect the assistant to read Teams."; }
+}
+
+async function loadContext(){
+  var inf=$("ctxInfer"), clip=$("ctxClip");
+  try{
+    var c=await fetch("/api/local/context").then(function(r){return r.json()});
+    inf.textContent=c.inference||"—";
+    if(c.clipboard){
+      clip.style.display="block";
+      clip.innerHTML='<span class="k">Clipboard · '+(c.clipboardKind||"text")+'</span>'+esc(c.clipboard);
+    } else clip.style.display="none";
+  }catch(e){ inf.textContent="Connect the assistant to read your screen context."; }
+}
+
+async function loadOneDrive(){
+  var roots=$("odRoots"), recent=$("odRecent");
+  try{
+    var o=await fetch("/api/local/onedrive").then(function(r){return r.json()});
+    roots.innerHTML="";
+    if(!o.available){ recent.innerHTML='<div class="empty">'+esc(o.note||"No OneDrive sync folder found.")+'</div>'; $("odSrc").textContent="not synced"; return; }
+    (o.roots||[]).forEach(function(rt){
+      var el=document.createElement("div"); el.className="root";
+      el.innerHTML='<div class="rn"><span class="kd'+(rt.kind==="business"?" sp":"")+'"></span></div><div class="rm">'+rt.fileCount+' file'+(rt.fileCount===1?"":"s")+'</div>';
+      el.querySelector(".rn").insertAdjacentText("beforeend"," "+rt.name);
+      roots.appendChild(el);
+    });
+    recent.innerHTML="";
+    if(!(o.recent||[]).length){ recent.innerHTML='<div class="empty">Nothing changed recently.</div>'; return; }
+    o.recent.slice(0,12).forEach(function(dc){
+      var row=document.createElement("div"); row.className="li";
+      row.innerHTML='<span class="sev ok"></span><div class="bd"><div class="r1"><span class="ti"></span></div>'+
+        '<div class="tags"><span class="chip">'+(dc.ext||"").replace(".","")+'</span></div></div>'+
+        '<span class="op">'+hhmm(dc.modified)+'</span>';
+      row.querySelector(".ti").textContent=dc.name;
+      recent.appendChild(row);
+    });
+  }catch(e){ recent.innerHTML='<div class="empty">Connect the assistant to list synced files.</div>'; }
+}
+
+$("genReport").addEventListener("click",function(){
+  var st=$("genState"), btn=$("genReport");
+  btn.disabled=true; st.textContent="Generating in Word…";
+  var body={title:"Daily status — Products",sections:[
+    {heading:"Summary",body:"Auto-drafted from today's calendar, inbox and open incidents."},
+    {heading:"Attention",body:"Items awaiting the Deputy Chief are listed in the Decisions tab."},
+    {heading:"Channels",body:"UPI/IMPS/NEFT/RTGS health per the live pulse."}
+  ]};
+  fetch("/api/local/report",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)})
+    .then(function(r){return r.json()}).then(function(res){
+      btn.disabled=false;
+      if(res.created){ st.textContent="Saved: "+res.path; toast("Report ready in your Documents."); }
+      else{ st.textContent=res.error||res.fix||"Word not available here."; }
+    }).catch(function(){ btn.disabled=false; st.textContent="Connect the assistant to generate reports."; });
+});
 
 /* --- boot ----------------------------------------------------------------- */
 build(); place(); renderTasks(); setActive(0); load(); loadActivity();
